@@ -399,6 +399,12 @@ exception on failure.
   } else {
     print "Error: $Math::Calc::Parser::ERROR\n";
   }
+  
+  if (defined (my $result = $parser->evaluate('log(5')) {
+  	print "Result: $result\n";
+  } else {
+  	print "Error: ".$parser->error."\n";
+  }
 
 Same as L</"evaluate"> but instead of throwing an exception on failure, returns
 undef and sets $Math::Calc::Parser::ERROR to the error message. If called on an
