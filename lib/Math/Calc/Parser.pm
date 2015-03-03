@@ -278,6 +278,8 @@ sub evaluate {
 	$self = $self->new unless ref $self;
 	$expr = $self->parse($expr) unless ref $expr eq 'ARRAY';
 	
+	die "No expression to evaluate\n" unless @$expr;
+	
 	my @eval_stack;
 	foreach my $token (@$expr) {
 		if ($token->{type} eq 'number') {
@@ -345,7 +347,7 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   $parser->add_functions(triple => { args => 1, code => sub { $_[0]*3 } });
   $parser->add_functions(pow => { args => 2, code => sub { $_[0] ** $_[1] });
   $parser->add_functions(one => sub { 1 }, two => sub { 2 }, three => sub { 3 });
-  my $result = $parser->evaluate('triple one'); # returns 3
+  my $result = $parser->evaluate('2(triple one)'); # returns 6
   my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3
   my $result = $parser->try_evaluate('triple triple') // die $parser->error;
   
@@ -355,29 +357,23 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
 =head1 DESCRIPTION
 
 L<Math::Calc::Parser> is a simplified mathematical expression evaluator with
-support for complex and trigonometric operations and perlish "parentheses
-optional" functions. It parses input strings into a structure based on
-L<Reverse Polish notation|http://en.wikipedia.org/wiki/Reverse_Polish_notation>
+support for complex and trigonometric operations, implicit multiplication, and
+perlish "parentheses optional" functions. It parses input strings into a
+structure based on L<Reverse Polish notation|http://en.wikipedia.org/wiki/Reverse_Polish_notation>
 (RPN), and then evaluates the result. The list of recognized functions may be
 customized using L</"add_functions"> and L</"remove_functions">.
 
 =head1 ATTRIBUTES
 
-=over
-
-=item error
+=head2 error
 
   $parser->try_evaluate('2//') // die $parser->error;
 
 Returns the error message after a failed L</"try_evaluate">.
 
-=back
-
 =head1 METHODS
 
-=over
-
-=item parse
+=head2 parse
 
   my $parsed = Math::Calc::Parser->parse('5 / e^(i*pi)');
 
@@ -386,7 +382,7 @@ method. On success, returns an array reference representation of the expression
 in RPN notation which can be passed to L</"evaluate">. Throws an exception on
 failure.
 
-=item evaluate
+=head2 evaluate
 
   my $result = Math::Calc::Parser->evaluate($parsed);
   my $result = Math::Calc::Parser->evaluate('log rand 7');
@@ -396,7 +392,7 @@ method, and the argument can be either an arrayref from L</"parse"> or a string
 expression. Returns the result of the expression on success or throws an
 exception on failure.
 
-=item try_evaluate
+=head2 try_evaluate
 
   if (defined (my $result = Math::Calc::Parser->evaluate('floor 2.5'))) {
     print "Result: $result\n";
@@ -408,7 +404,7 @@ Same as L</"evaluate"> but instead of throwing an exception on failure, returns
 undef and sets $Math::Calc::Parser::ERROR to the error message. If called on an
 object instance, the error can be retrieved using the L</"error"> accessor.
 
-=item add_functions
+=head2 add_functions
 
   $parser->add_functions(
     my_function => { args => 5, code => sub { return grep { $_ > 0 } @_; } },
@@ -424,15 +420,13 @@ than or equal to C<0>. C<code> or the passed coderef will be called with the
 numeric operands passed as parameters, and must either return a numeric result
 or throw an exception.
 
-=item remove_functions
+=head2 remove_functions
 
   $parser->remove_functions('rand','nonexistent');
 
 Removes functions from the parser object if they exist. Can be used to remove
 default functions as well as functions previously added with
 L</"add_functions">.
-
-=back
 
 =head1 OPERATORS
 
@@ -509,6 +503,15 @@ Sine.
 Square root.
 
 =back
+
+=head1 CAVEATS
+
+While parentheses are optional for functions with 0 or 1 argument, they are
+required when a comma is used to separate multiple arguments.
+
+Due to the nature of handling complex numbers, the evaluated result may be a
+Math::Complex object. These objects can be directly printed or used in numeric
+operations but may be more difficult to use in comparisons.
 
 =head1 BUGS
 
