@@ -5,7 +5,7 @@ use Test::More;
 
 my $parser = Math::Calc::Parser->new;
 
-my $parsed = $parser->parse('');
+my $parsed = Math::Calc::Parser->parse('');
 is_deeply $parsed, [], 'Parsed empty expression';
 $parsed = $parser->parse('1');
 is_deeply $parsed, [{type => 'number', value => 1}], 'Parsed lone number';

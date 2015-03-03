@@ -6,7 +6,7 @@ use Test::More;
 
 my $parser = Math::Calc::Parser->new;
 
-my $result = $parser->evaluate([{type => 'number', value => 2},
+my $result = Math::Calc::Parser->evaluate([{type => 'number', value => 2},
 	{type => 'number', value => 2},
 	{type => 'operator', value => '+'}]);
 is $result, 4, 'Evaluated 2+2';

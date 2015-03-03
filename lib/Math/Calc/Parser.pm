@@ -4,25 +4,10 @@ use Carp 'croak';
 use Math::Complex;
 use POSIX qw/ceil floor/;
 use Scalar::Util 'looks_like_number';
-
-use Moo 2;
 use namespace::clean;
 
 our $VERSION = '0.001';
 our $ERROR;
-
-has '_functions' => (
-	is => 'ro',
-	lazy => 1,
-	default => \&_default_functions,
-	init_arg => undef,
-);
-
-has 'error' => (
-	is => 'rwp',
-	clearer => 1,
-	init_arg => undef,
-);
 
 {
 	my %operators = (
@@ -100,6 +85,34 @@ has 'error' => (
 	sub _default_functions { \%functions }
 }
 
+sub new {
+	my $class = shift;
+	my $self = {};
+	bless $self, $class;
+	return $self;
+}
+
+sub _functions {
+	my $self = shift;
+	return $self->{_functions} //= _default_functions();
+}
+
+sub error {
+	my $self = shift;
+	return exists $self->{error} ? $self->{error} : undef;
+}
+
+sub _set_error {
+	my ($self, $error) = @_;
+	$self->{error} = $error;
+	return $self;
+}
+
+sub clear_error {
+	my $self = shift;
+	delete $self->{error};
+}
+
 sub add_functions {
 	my ($self, %functions) = @_;
 	foreach my $name (keys %functions) {
@@ -144,7 +157,7 @@ sub parse {
 		my ($token, $octal) = ($1, $2);
 		
 		# Octal/hex/binary numbers
-		$token = oct $octal if length $octal;
+		$token = oct $octal if defined $octal and length $octal;
 		
 		# Implicit multiplication
 		if ($binop_possible and $token ne ')' and $token ne ','
