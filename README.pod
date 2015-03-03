@@ -13,7 +13,7 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   my $result = calc '2 + 2';
   my $result = calc 'int rand 5';
   my $result = calc 'sqrt -1';
-  my $result = eval { calc '1/0' } // die $@;
+  eval { $result = calc '1/0'; 1 } or die $@;
   
   # Class methods
   my $result = Math::Calc::Parser->evaluate('2 + 2');
