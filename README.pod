@@ -36,7 +36,8 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   
   my $result = $parser->evaluate('2(triple one)'); # returns 6
   my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3
-  my $result = $parser->try_evaluate('triple triple') // die $parser->error;
+  my $result = $parser->try_evaluate('triple triple');
+  die $parser->error unless defined $result;
   
   $parser->remove_functions('pi', 'e');
   $parser->evaluate('3pi'); # dies
@@ -67,7 +68,8 @@ Throws an exception on error.
 
 =head2 error
 
-  $parser->try_evaluate('2//') // die $parser->error;
+  my $result = $parser->try_evaluate('2//');
+  die $parser->error unless defined $result;
 
 Returns the error message after a failed L</"try_evaluate">.
 

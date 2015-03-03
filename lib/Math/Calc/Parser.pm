@@ -50,7 +50,8 @@ our $ERROR;
 	}
 	
 	sub _operator {
-		my $oper = shift // croak 'No operator passed';
+		my $oper = shift;
+		croak 'No operator passed' unless defined $oper;
 		return undef unless exists $operators{$oper};
 		return $operators{$oper};
 	}
@@ -97,7 +98,8 @@ sub new {
 
 sub _functions {
 	my $self = shift;
-	return $self->{_functions} //= _default_functions();
+	$self->{_functions} = _default_functions() unless defined $self->{_functions};
+	return $self->{_functions};
 }
 
 sub error {
@@ -366,7 +368,8 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   
   my $result = $parser->evaluate('2(triple one)'); # returns 6
   my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3
-  my $result = $parser->try_evaluate('triple triple') // die $parser->error;
+  my $result = $parser->try_evaluate('triple triple');
+  die $parser->error unless defined $result;
   
   $parser->remove_functions('pi', 'e');
   $parser->evaluate('3pi'); # dies
@@ -397,7 +400,8 @@ Throws an exception on error.
 
 =head2 error
 
-  $parser->try_evaluate('2//') // die $parser->error;
+  my $result = $parser->try_evaluate('2//');
+  die $parser->error unless defined $result;
 
 Returns the error message after a failed L</"try_evaluate">.
 
