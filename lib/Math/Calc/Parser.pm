@@ -470,7 +470,7 @@ addition and subtraction.
 
 =head1 DEFAULT FUNCTIONS
 
-L<Math::Calc::Parser> includes several functions by default, which can be
+L<Math::Calc::Parser> parses several functions by default, which can be
 customized using L</"add_functions"> or L</"remove_functions"> on an object
 instance.
 
@@ -519,6 +519,10 @@ Log base 10.
 =item logn
 
 Log with arbitrary base given as second argument.
+
+=item pi
+
+π
 
 =item rand
 
