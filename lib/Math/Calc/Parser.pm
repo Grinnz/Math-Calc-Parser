@@ -8,7 +8,7 @@ use Scalar::Util 'looks_like_number';
 use namespace::clean;
 use Exporter 'import';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 our @EXPORT_OK = 'calc';
 our $ERROR;
 
