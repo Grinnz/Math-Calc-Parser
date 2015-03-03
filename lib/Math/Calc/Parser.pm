@@ -295,8 +295,9 @@ sub evaluate {
 			die "Malformed expression\n" if @eval_stack < $num_args;
 			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : 0;
 			local $@;
-			my $result = eval { $function->{code}(@args) };
-			if ($@) {
+			my $result;
+			my $rc = eval { $result = $function->{code}(@args); 1 };
+			unless ($rc) {
 				my $err = $@;
 				$err =~ s/ at .+? line \d+\.$//i;
 				die $err;
@@ -318,8 +319,9 @@ sub try_evaluate {
 	$self->clear_error;
 	undef $ERROR;
 	local $@;
-	my $result = eval { $self->evaluate($expr) };
-	if ($@) {
+	my $result;
+	my $rc = eval { $result = $self->evaluate($expr); 1 };
+	unless ($rc) {
 		my $err = $@;
 		chomp $err;
 		$self->_set_error($ERROR = $err);
