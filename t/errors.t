@@ -5,20 +5,20 @@ use Test::More;
 
 my $parser = Math::Calc::Parser->new;
 
-eval { $parser->parse('(') };
-ok $@, "Exception: $@";
-eval { $parser->parse('e)') };
-ok $@, "Exception: $@";
-eval { $parser->parse('log , 2') };
-ok $@, "Exception: $@";
-eval { $parser->parse('invalid') };
-ok $@, "Exception: $@";
-eval { $parser->evaluate([{type => 'operator', value => '*'}]) };
-ok $@, "Exception: $@";
-eval { $parser->evaluate([{type => 'unknown', value => 'unknown'}]) };
-ok $@, "Exception: $@";
-eval { calc '5/0' };
-ok $@, "Exception: $@";
+my $res = eval { $parser->parse('('); 1 };
+ok !$res, "Exception: $@";
+$res = eval { $parser->parse('e)'); 1 };
+ok !$res, "Exception: $@";
+$res = eval { $parser->parse('log , 2'); 1 };
+ok !$res, "Exception: $@";
+$res = eval { $parser->parse('invalid'); 1 };
+ok !$res, "Exception: $@";
+$res = eval { $parser->evaluate([{type => 'operator', value => '*'}]); 1 };
+ok !$res, "Exception: $@";
+$res = eval { $parser->evaluate([{type => 'unknown', value => 'unknown'}]); 1 };
+ok !$res, "Exception: $@";
+$res = eval { calc '5/0'; 1 };
+ok !$res, "Exception: $@";
 my $result = $parser->try_evaluate([{type => 'number', value => 2},
 	{type => 'number', value => 3}]);
 is $result, undef, "Exception evaluating expression";
