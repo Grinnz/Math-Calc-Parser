@@ -475,7 +475,7 @@ definitions.
 
   +, -, *, /, %, ^, <<, >>
 
-Note 1: + and - can represent a unary operation (negation) in addition to
+Note: + and - can represent a unary operation (negation) in addition to
 addition and subtraction.
 
 =head1 DEFAULT FUNCTIONS
