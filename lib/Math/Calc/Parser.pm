@@ -341,13 +341,14 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   my $result = calc '2 + 2';
   my $result = calc 'int rand 5';
   my $result = calc 'sqrt -1';
+  my $result = eval { calc '1/0' } // die $@;
   
   # Class methods
   my $result = Math::Calc::Parser->evaluate('2 + 2');
   my $result = Math::Calc::Parser->evaluate('3pi^2');
   my $result = Math::Calc::Parser->evaluate('0.7(ln 4)');
   
-  # With error handling
+  # With more advanced error handling
   my $result = Math::Calc::Parser->try_evaluate('malformed(expression');
   if (defined $result) {
     print "Result: $result\n";
@@ -372,8 +373,9 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
 
 L<Math::Calc::Parser> is a simplified mathematical expression evaluator with
 support for complex and trigonometric operations, implicit multiplication, and
-perlish "parentheses optional" functions. It parses input strings into a
-structure based on L<Reverse Polish notation|http://en.wikipedia.org/wiki/Reverse_Polish_notation>
+perlish "parentheses optional" functions, while being safe for arbitrary user
+input. It parses input strings into a structure based on
+L<Reverse Polish notation|http://en.wikipedia.org/wiki/Reverse_Polish_notation>
 (RPN), and then evaluates the result. The list of recognized functions may be
 customized using L</"add_functions"> and L</"remove_functions">.
 
