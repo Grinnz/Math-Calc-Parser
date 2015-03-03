@@ -1,0 +1,211 @@
+=pod
+
+=head1 NAME
+
+Math::Calc::Parser - Parse and evaluate mathematical expressions
+
+=head1 SYNOPSIS
+
+  use Math::Calc::Parser;
+  
+  # Class methods
+  my $result = Math::Calc::Parser->evaluate('2 + 2');
+  
+  # With error handling
+  my $result = Math::Calc::Parser->try_evaluate('malformed(expression');
+  if (defined $result) {
+    print "Result: $result\n";
+  } else {
+    print "Error: $Math::Calc::Parser::ERROR\n";
+  }
+  
+  # Or as an object for more control
+  my $parser = Math::Calc::Parser->new;
+  $parser->add_functions(triple => { args => 1, code => sub { $_[0]*3 } });
+  $parser->add_functions(pow => { args => 2, code => sub { $_[0] ** $_[1] });
+  $parser->add_functions(one => sub { 1 }, two => sub { 2 }, three => sub { 3 });
+  my $result = $parser->evaluate('triple one'); # returns 3
+  my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3
+  my $result = $parser->try_evaluate('triple triple') // die $parser->error;
+  
+  $parser->remove_functions('pi', 'e');
+  $parser->evaluate('3pi'); # dies
+
+=head1 DESCRIPTION
+
+L<Math::Calc::Parser> is a simplified mathematical expression evaluator with
+support for complex and trigonometric operations and perlish "parentheses
+optional" functions. It parses input strings into a structure based on
+L<Reverse Polish notation|http://en.wikipedia.org/wiki/Reverse_Polish_notation>
+(RPN), and then evaluates the result. The list of recognized functions may be
+customized using L</"add_functions"> and L</"remove_functions">.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item error
+
+  $parser->try_evaluate('2//') // die $parser->error;
+
+Returns the error message after a failed L</"try_evaluate">.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item parse
+
+  my $parsed = Math::Calc::Parser->parse('5 / e^(i*pi)');
+
+Parses a mathematical expression. Can be called as either an object or class
+method. On success, returns an array reference representation of the expression
+in RPN notation which can be passed to L</"evaluate">. Throws an exception on
+failure.
+
+=item evaluate
+
+  my $result = Math::Calc::Parser->evaluate($parsed);
+  my $result = Math::Calc::Parser->evaluate('log rand 7');
+
+Evaluates a mathematical expression. Can be called as either an object or class
+method, and the argument can be either an arrayref from L</"parse"> or a string
+expression. Returns the result of the expression on success or throws an
+exception on failure.
+
+=item try_evaluate
+
+  if (defined (my $result = Math::Calc::Parser->evaluate('floor 2.5'))) {
+    print "Result: $result\n";
+  } else {
+    print "Error: $Math::Calc::Parser::ERROR\n";
+  }
+
+Same as L</"evaluate"> but instead of throwing an exception on failure, returns
+undef and sets $Math::Calc::Parser::ERROR to the error message. If called on an
+object instance, the error can be retrieved using the L</"error"> accessor.
+
+=item add_functions
+
+  $parser->add_functions(
+    my_function => { args => 5, code => sub { return grep { $_ > 0 } @_; } },
+    other_function => sub { 20 }
+  );
+
+Adds functions to be recognized by the parser object. Keys are function names
+and must consist only of
+L<word characters|http://perldoc.perl.org/perlrecharclass.html#Word-characters>).
+Values are either a hashref containing C<args> and C<code> keys, or a coderef
+that is assumed to be a 0-argument function. C<args> must be an integer greater
+than or equal to C<0>. C<code> or the passed coderef will be called with the
+numeric operands passed as parameters, and must either return a numeric result
+or throw an exception.
+
+=item remove_functions
+
+  $parser->remove_functions('rand','nonexistent');
+
+Removes functions from the parser object if they exist. Can be used to remove
+default functions as well as functions previously added with
+L</"add_functions">.
+
+=back
+
+=head1 OPERATORS
+
+L<Math::Calc::Parser> recognizes the following operators with their usual
+definitions.
+
+  +, -, *, /, %, ^, <<, >>
+
+Note 1: + and - can represent a unary operation (negation) in addition to
+addition and subtraction.
+
+=head1 DEFAULT FUNCTIONS
+
+L<Math::Calc::Parser> includes several functions by default, which can be
+customized using L</"add_functions"> or L</"remove_functions"> on an object
+instance.
+
+=over
+
+=item acos
+
+=item asin
+
+=item atan
+
+Inverse sine, cosine, and tangent.
+
+=item ceil
+
+Round up to nearest integer.
+
+=item cos
+
+Cosine.
+
+=item e
+
+Euler's number.
+
+=item floor
+
+Round down to nearest integer.
+
+=item i
+
+Imaginary unit.
+
+=item int
+
+Cast (truncate) to integer.
+
+=item ln
+
+Natural log.
+
+=item log
+
+Log base 10.
+
+=item logn
+
+Log with arbitrary base given as second argument.
+
+=item rand
+
+Random value between 0 and 1.
+
+=item sin
+
+Sine.
+
+=item sqrt
+
+Square root.
+
+=back
+
+=head1 BUGS
+
+Report any issues on the public bugtracker.
+
+=head1 AUTHOR
+
+Dan Book, C<dbook@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2015, Dan Book.
+
+This library is free software; you may redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=head1 SEE ALSO
+
+L<Math::Complex>
+
+=cut

@@ -1,0 +1,521 @@
+package Math::Calc::Parser;
+
+use Carp 'croak';
+use Math::Complex;
+use POSIX qw/ceil floor/;
+use Scalar::Util 'looks_like_number';
+
+use Moo 2;
+use namespace::clean;
+
+our $VERSION = '0.001';
+our $ERROR;
+
+has '_functions' => (
+	is => 'ro',
+	lazy => 1,
+	default => \&_default_functions,
+	init_arg => undef,
+);
+
+has 'error' => (
+	is => 'rwp',
+	clearer => 1,
+	init_arg => undef,
+);
+
+{
+	my %operators = (
+		'<<' => { assoc => 'left' },
+		'>>' => { assoc => 'left' },
+		'+'  => { assoc => 'left' },
+		'-'  => { assoc => 'left' },
+		'*'  => { assoc => 'left' },
+		'/'  => { assoc => 'left' },
+		'%'  => { assoc => 'left' },
+		'^'  => { assoc => 'right' },
+		# Dummy operators for unary minus/plus
+		'u-' => { assoc => 'right' },
+		'u+' => { assoc => 'right' },
+	);
+	
+	# Ordered lowest precedence to highest
+	my @op_precedence = (
+		['<<','>>'],
+		['+','-'],
+		['*','/','%'],
+		['u-','u+'],
+		['^'],
+	);
+	
+	# Cache operator precedence
+	my (%lower_prec, %higher_prec);
+	$higher_prec{$_} = 1 for keys %operators;
+	foreach my $set (@op_precedence) {
+		delete $higher_prec{$_} for @$set;
+		foreach my $op (@$set) {
+			$operators{$op}{equal_to}{$_} = 1 for @$set;
+			$operators{$op}{lower_than}{$_} = 1 for keys %higher_prec;
+			$operators{$op}{higher_than}{$_} = 1 for keys %lower_prec;
+		}
+		$lower_prec{$_} = 1 for @$set;
+	}
+	
+	sub _operator {
+		my $oper = shift // croak 'No operator passed';
+		return undef unless exists $operators{$oper};
+		return $operators{$oper};
+	}
+	
+	my %functions = (
+		'<<'  => { args => 2, code => sub { $_[0] << $_[1] } },
+		'>>'  => { args => 2, code => sub { $_[0] >> $_[1] } },
+		'+'   => { args => 2, code => sub { $_[0] + $_[1] } },
+		'-'   => { args => 2, code => sub { $_[0] - $_[1] } },
+		'*'   => { args => 2, code => sub { $_[0] * $_[1] } },
+		'/'   => { args => 2, code => sub { $_[0] / $_[1] } },
+		'%'   => { args => 2, code => sub { $_[0] % $_[1] } },                                           
+		'^'   => { args => 2, code => sub { cplx($_[0]) ** $_[1] } },
+		'u-'  => { args => 1, code => sub { -$_[0] } },
+		'u+'  => { args => 1, code => sub { +$_[0] } },
+		sqrt  => { args => 1, code => sub { sqrt $_[0] } },
+		pi    => { args => 0, code => sub { pi } },
+		i     => { args => 0, code => sub { i } },
+		e     => { args => 0, code => sub { exp 1 } },
+		ln    => { args => 1, code => sub { log $_[0] } },
+		log   => { args => 1, code => sub { log($_[0])/log(10) } },
+		logn  => { args => 2, code => sub { log($_[0])/log($_[1]) } },
+		sin   => { args => 1, code => sub { sin $_[0] } },
+		cos   => { args => 1, code => sub { cos $_[0] } },
+		tan   => { args => 1, code => sub { tan $_[0] } },
+		asin  => { args => 1, code => sub { asin $_[0] } },
+		acos  => { args => 1, code => sub { acos $_[0] } },
+		atan  => { args => 1, code => sub { atan $_[0] } },
+		int   => { args => 1, code => sub { int $_[0] } },
+		floor => { args => 1, code => sub { floor $_[0] } },
+		ceil  => { args => 1, code => sub { ceil $_[0] } },
+		rand  => { args => 0, code => sub { rand } },
+	);
+	
+	sub _default_functions { \%functions }
+}
+
+sub add_functions {
+	my ($self, %functions) = @_;
+	foreach my $name (keys %functions) {
+		croak "Function $name has invalid name" unless $name =~ m/\A\w+\z/;
+		my $definition = $functions{$name};
+		$definition = { args => 0, code => $definition } if ref $definition eq 'CODE';
+		croak "No argument count for function $name"
+			unless defined (my $args = $definition->{args});
+		croak "Invalid argument count for function $name"
+			unless $args =~ m/\A\d+\z/ and $args >= 0;
+		croak "No coderef for function $name"
+			unless defined (my $code = $definition->{code});
+		croak "Invalid coderef for function $name" unless ref $code eq 'CODE';
+		$self->_functions->{$name} = { args => $args, code => $code };
+	}
+	return $self;
+}
+
+sub remove_functions {
+	my ($self, @functions) = @_;
+	foreach my $name (grep { defined } @functions) {
+		next unless exists $self->_functions->{$name};
+		next if defined _operator($name); # Do not remove operator functions
+		delete $self->_functions->{$name};
+	}
+	return $self;
+}
+
+my $token_re = qr{(
+	( 0x[0-9a-f]+ | 0b[01]+ | 0[0-7]+ ) # Octal/hex/binary numbers
+	| (?: \d*\. )? \d+ (?: e[-+]?\d+ )? # Decimal numbers
+	| [(),]                             # Parentheses and commas
+	| \w+                               # Functions
+	| (?: [-+*/^%] | << | >> )          # Operators
+)}ix;
+
+sub parse {
+	my ($self, $expr) = @_;
+	$self = $self->new unless ref $self;
+	my (@expr_queue, @oper_stack, $binop_possible);
+	while ($expr =~ /$token_re/g) {
+		my ($token, $octal) = ($1, $2);
+		
+		# Octal/hex/binary numbers
+		$token = oct $octal if length $octal;
+		
+		# Implicit multiplication
+		if ($binop_possible and $token ne ')' and $token ne ','
+		    and !defined _operator($token)) {
+			_shunt_operator(\@expr_queue, \@oper_stack, '*');
+		}
+		
+		if (defined _operator($token)) {
+			# Detect unary minus/plus
+			if (!$binop_possible and ($token eq '-' or $token eq '+')) {
+				$token = "u$token";
+			}
+			_shunt_operator(\@expr_queue, \@oper_stack, $token);
+			$binop_possible = 0;
+		} elsif ($token eq '(') {
+			_shunt_left_paren(\@expr_queue, \@oper_stack);
+			$binop_possible = 0;
+		} elsif ($token eq ')') {
+			_shunt_right_paren(\@expr_queue, \@oper_stack)
+				or die "Mismatched parentheses\n";
+			$binop_possible = 1;
+		} elsif ($token eq ',') {
+			_shunt_comma(\@expr_queue, \@oper_stack)
+				or die "Misplaced comma or mismatched parentheses\n";
+			$binop_possible = 0;
+		} elsif (looks_like_number $token) {
+			_shunt_number(\@expr_queue, \@oper_stack, $token);
+			$binop_possible = 1;
+		} elsif ($token =~ m/\A\w+\z/) {
+			die "Invalid function $token\n" unless exists $self->_functions->{$token};
+			if ($self->_functions->{$token}{args} > 0) {
+				_shunt_function_with_args(\@expr_queue, \@oper_stack, $token);
+				$binop_possible = 0;
+			} else {
+				_shunt_function_no_args(\@expr_queue, \@oper_stack, $token);
+				$binop_possible = 1;
+			}
+		} else {
+			die "Unknown token $token\n";
+		}
+	}
+	
+	# Leftover operators go at the end
+	while (@oper_stack) {
+		die "Mismatched parentheses\n"
+			if $oper_stack[-1]{type} eq 'paren';
+		push @expr_queue, pop @oper_stack;
+	}
+	
+	return \@expr_queue;
+}
+
+sub _shunt_number {
+	my ($expr_queue, $oper_stack, $num) = @_;
+	push @$expr_queue, { type => 'number', value => $num };
+	return 1;
+}
+
+sub _shunt_operator {
+	my ($expr_queue, $oper_stack, $oper) = @_;
+	my $oper_stat = _operator($oper);
+	my $assoc = $oper_stat->{assoc};
+	while (@$oper_stack and $oper_stack->[-1]{type} eq 'operator') {
+		my $top_oper = $oper_stack->[-1]{value};
+		if ($oper_stat->{lower_than}{$top_oper}
+		    or ($assoc eq 'left' and $oper_stat->{equal_to}{$top_oper})) {
+			push @$expr_queue, pop @$oper_stack;
+		} else {
+			last;
+		}
+	}
+	push @$oper_stack, { type => 'operator', value => $oper };
+	return 1;
+}
+
+sub _shunt_function_with_args {
+	my ($expr_queue, $oper_stack, $function) = @_;
+	push @$oper_stack, { type => 'function', value => $function };
+	return 1;
+}
+
+sub _shunt_function_no_args {
+	my ($expr_queue, $oper_stack, $function) = @_;
+	push @$expr_queue, { type => 'function', value => $function };
+	return 1;
+}
+
+sub _shunt_left_paren {
+	my ($expr_queue, $oper_stack) = @_;
+	push @$oper_stack, { type => 'paren', value => '(' };
+	return 1;
+}
+
+sub _shunt_right_paren {
+	my ($expr_queue, $oper_stack) = @_;
+	while (@$oper_stack and $oper_stack->[-1]{type} ne 'paren') {
+		push @$expr_queue, pop @$oper_stack;
+	}
+	return 0 unless @$oper_stack and $oper_stack->[-1]{type} eq 'paren';
+	pop @$oper_stack;
+	if (@$oper_stack and $oper_stack->[-1]{type} eq 'function') {
+		push @$expr_queue, pop @$oper_stack;
+	}
+	return 1;
+}
+
+sub _shunt_comma {
+	my ($expr_queue, $oper_stack) = @_;
+	while (@$oper_stack and $oper_stack->[-1]{type} ne 'paren') {
+		push @$expr_queue, pop @$oper_stack;
+	}
+	return 0 unless @$oper_stack and $oper_stack->[-1]{type} eq 'paren';
+	return 1;
+}
+
+sub evaluate {
+	my ($self, $expr) = @_;
+	$self = $self->new unless ref $self;
+	$expr = $self->parse($expr) unless ref $expr eq 'ARRAY';
+	
+	my @eval_stack;
+	foreach my $token (@$expr) {
+		if ($token->{type} eq 'number') {
+			push @eval_stack, $token->{value};
+		} elsif (exists $self->_functions->{$token->{value}}) {
+			my $function = $self->_functions->{$token->{value}};
+			my $num_args = $function->{args};
+			die "Malformed expression\n" if @eval_stack < $num_args;
+			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : 0;
+			local $@;
+			my $result = eval { $function->{code}(@args) };
+			if ($@) {
+				my $err = $@;
+				$err =~ s/ at .+? line \d+\.$//i;
+				die $err;
+			}
+			push @eval_stack, $result;
+		} else {
+			die "Invalid function or operator: $token->{value}\n";
+		}
+	}
+	
+	die "Malformed expression\n" if @eval_stack > 1;
+	
+	return $eval_stack[0];
+}
+
+sub try_evaluate {
+	my ($self, $expr) = @_;
+	$self = $self->new unless ref $self;
+	$self->clear_error;
+	undef $ERROR;
+	local $@;
+	my $result = eval { $self->evaluate($expr) };
+	if ($@) {
+		my $err = $@;
+		chomp $err;
+		$self->_set_error($ERROR = $err);
+		return undef;
+	}
+	return $result;
+}
+
+=head1 NAME
+
+Math::Calc::Parser - Parse and evaluate mathematical expressions
+
+=head1 SYNOPSIS
+
+  use Math::Calc::Parser;
+  
+  # Class methods
+  my $result = Math::Calc::Parser->evaluate('2 + 2');
+  
+  # With error handling
+  my $result = Math::Calc::Parser->try_evaluate('malformed(expression');
+  if (defined $result) {
+    print "Result: $result\n";
+  } else {
+    print "Error: $Math::Calc::Parser::ERROR\n";
+  }
+  
+  # Or as an object for more control
+  my $parser = Math::Calc::Parser->new;
+  $parser->add_functions(triple => { args => 1, code => sub { $_[0]*3 } });
+  $parser->add_functions(pow => { args => 2, code => sub { $_[0] ** $_[1] });
+  $parser->add_functions(one => sub { 1 }, two => sub { 2 }, three => sub { 3 });
+  my $result = $parser->evaluate('triple one'); # returns 3
+  my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3
+  my $result = $parser->try_evaluate('triple triple') // die $parser->error;
+  
+  $parser->remove_functions('pi', 'e');
+  $parser->evaluate('3pi'); # dies
+
+=head1 DESCRIPTION
+
+L<Math::Calc::Parser> is a simplified mathematical expression evaluator with
+support for complex and trigonometric operations and perlish "parentheses
+optional" functions. It parses input strings into a structure based on
+L<Reverse Polish notation|http://en.wikipedia.org/wiki/Reverse_Polish_notation>
+(RPN), and then evaluates the result. The list of recognized functions may be
+customized using L</"add_functions"> and L</"remove_functions">.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item error
+
+  $parser->try_evaluate('2//') // die $parser->error;
+
+Returns the error message after a failed L</"try_evaluate">.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item parse
+
+  my $parsed = Math::Calc::Parser->parse('5 / e^(i*pi)');
+
+Parses a mathematical expression. Can be called as either an object or class
+method. On success, returns an array reference representation of the expression
+in RPN notation which can be passed to L</"evaluate">. Throws an exception on
+failure.
+
+=item evaluate
+
+  my $result = Math::Calc::Parser->evaluate($parsed);
+  my $result = Math::Calc::Parser->evaluate('log rand 7');
+
+Evaluates a mathematical expression. Can be called as either an object or class
+method, and the argument can be either an arrayref from L</"parse"> or a string
+expression. Returns the result of the expression on success or throws an
+exception on failure.
+
+=item try_evaluate
+
+  if (defined (my $result = Math::Calc::Parser->evaluate('floor 2.5'))) {
+    print "Result: $result\n";
+  } else {
+    print "Error: $Math::Calc::Parser::ERROR\n";
+  }
+
+Same as L</"evaluate"> but instead of throwing an exception on failure, returns
+undef and sets $Math::Calc::Parser::ERROR to the error message. If called on an
+object instance, the error can be retrieved using the L</"error"> accessor.
+
+=item add_functions
+
+  $parser->add_functions(
+    my_function => { args => 5, code => sub { return grep { $_ > 0 } @_; } },
+    other_function => sub { 20 }
+  );
+
+Adds functions to be recognized by the parser object. Keys are function names
+and must consist only of
+L<word characters|http://perldoc.perl.org/perlrecharclass.html#Word-characters>).
+Values are either a hashref containing C<args> and C<code> keys, or a coderef
+that is assumed to be a 0-argument function. C<args> must be an integer greater
+than or equal to C<0>. C<code> or the passed coderef will be called with the
+numeric operands passed as parameters, and must either return a numeric result
+or throw an exception.
+
+=item remove_functions
+
+  $parser->remove_functions('rand','nonexistent');
+
+Removes functions from the parser object if they exist. Can be used to remove
+default functions as well as functions previously added with
+L</"add_functions">.
+
+=back
+
+=head1 OPERATORS
+
+L<Math::Calc::Parser> recognizes the following operators with their usual
+definitions.
+
+  +, -, *, /, %, ^, <<, >>
+
+Note 1: + and - can represent a unary operation (negation) in addition to
+addition and subtraction.
+
+=head1 DEFAULT FUNCTIONS
+
+L<Math::Calc::Parser> includes several functions by default, which can be
+customized using L</"add_functions"> or L</"remove_functions"> on an object
+instance.
+
+=over
+
+=item acos
+
+=item asin
+
+=item atan
+
+Inverse sine, cosine, and tangent.
+
+=item ceil
+
+Round up to nearest integer.
+
+=item cos
+
+Cosine.
+
+=item e
+
+Euler's number.
+
+=item floor
+
+Round down to nearest integer.
+
+=item i
+
+Imaginary unit.
+
+=item int
+
+Cast (truncate) to integer.
+
+=item ln
+
+Natural log.
+
+=item log
+
+Log base 10.
+
+=item logn
+
+Log with arbitrary base given as second argument.
+
+=item rand
+
+Random value between 0 and 1.
+
+=item sin
+
+Sine.
+
+=item sqrt
+
+Square root.
+
+=back
+
+=head1 BUGS
+
+Report any issues on the public bugtracker.
+
+=head1 AUTHOR
+
+Dan Book, C<dbook@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2015, Dan Book.
+
+This library is free software; you may redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=head1 SEE ALSO
+
+L<Math::Complex>
+
+=cut
+
+1;
