@@ -6,10 +6,16 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
 
 =head1 SYNOPSIS
 
-  use Math::Calc::Parser;
+  use Math::Calc::Parser 'calc';
+  
+  my $result = calc '2 + 2';
+  my $result = calc 'int rand 5';
+  my $result = calc 'sqrt -1';
   
   # Class methods
   my $result = Math::Calc::Parser->evaluate('2 + 2');
+  my $result = Math::Calc::Parser->evaluate('3pi^2');
+  my $result = Math::Calc::Parser->evaluate('0.7(ln 4)');
   
   # With error handling
   my $result = Math::Calc::Parser->try_evaluate('malformed(expression');
@@ -24,6 +30,7 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   $parser->add_functions(triple => { args => 1, code => sub { $_[0]*3 } });
   $parser->add_functions(pow => { args => 2, code => sub { $_[0] ** $_[1] });
   $parser->add_functions(one => sub { 1 }, two => sub { 2 }, three => sub { 3 });
+  
   my $result = $parser->evaluate('2(triple one)'); # returns 6
   my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3
   my $result = $parser->try_evaluate('triple triple') // die $parser->error;
@@ -47,6 +54,18 @@ customized using L</"add_functions"> and L</"remove_functions">.
   $parser->try_evaluate('2//') // die $parser->error;
 
 Returns the error message after a failed L</"try_evaluate">.
+
+=head1 FUNCTIONS
+
+=head2 calc
+
+  use Math::Calc::Parser 'calc';
+  my $result = calc '2+2';
+  
+  $ perl -MMath::Calc::Parser -E 'say calc "2+2"'
+
+Compact exportable function wrapping L</"evaluate"> for string expressions.
+Note this function also throws exceptions on failure.
 
 =head1 METHODS
 
