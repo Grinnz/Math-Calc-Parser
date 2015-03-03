@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Math::Calc::Parser;
+use Math::Calc::Parser 'calc';
 use Test::More;
 
 my $parser = Math::Calc::Parser->new;
@@ -16,6 +16,8 @@ ok $@, "Exception: $@";
 eval { $parser->evaluate([{type => 'operator', value => '*'}]) };
 ok $@, "Exception: $@";
 eval { $parser->evaluate([{type => 'unknown', value => 'unknown'}]) };
+ok $@, "Exception: $@";
+eval { calc '5/0' };
 ok $@, "Exception: $@";
 my $result = $parser->try_evaluate([{type => 'number', value => 2},
 	{type => 'number', value => 3}]);

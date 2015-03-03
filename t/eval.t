@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Math::Calc::Parser;
+use Math::Calc::Parser 'calc';
 use Math::Complex 'cplx', 'i';
 use Test::More;
 
@@ -33,5 +33,7 @@ $result = $parser->evaluate([{type => 'number', value => 1},
 cmp_ok $result, '==', i, 'Evaluated sqrt -1';
 $result = $parser->evaluate('1+2*3^4');
 cmp_ok $result, '==', 1+2*cplx(3)**4, 'Evaluated 1+2*3^4 as string expression';
+$result = calc 'log 7';
+is $result, log(7)/log(10), 'Evaluated log 7 with calc()';
 
 done_testing;
