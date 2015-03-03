@@ -379,14 +379,6 @@ L<Reverse Polish notation|http://en.wikipedia.org/wiki/Reverse_Polish_notation>
 (RPN), and then evaluates the result. The list of recognized functions may be
 customized using L</"add_functions"> and L</"remove_functions">.
 
-=head1 ATTRIBUTES
-
-=head2 error
-
-  $parser->try_evaluate('2//') // die $parser->error;
-
-Returns the error message after a failed L</"try_evaluate">.
-
 =head1 FUNCTIONS
 
 =head2 calc
@@ -397,7 +389,15 @@ Returns the error message after a failed L</"try_evaluate">.
   $ perl -MMath::Calc::Parser -E 'say calc "2+2"'
 
 Compact exportable function wrapping L</"evaluate"> for string expressions.
-Note this function also throws exceptions on failure.
+Throws an exception on error.
+
+=head1 ATTRIBUTES
+
+=head2 error
+
+  $parser->try_evaluate('2//') // die $parser->error;
+
+Returns the error message after a failed L</"try_evaluate">.
 
 =head1 METHODS
 
