@@ -328,6 +328,8 @@ sub try_evaluate {
 	return $result;
 }
 
+=encoding utf8
+
 =head1 NAME
 
 Math::Calc::Parser - Parse and evaluate mathematical expressions
