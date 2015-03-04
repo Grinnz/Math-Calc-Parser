@@ -5,7 +5,6 @@ use Carp 'croak';
 use Math::Complex;
 use POSIX qw/ceil floor/;
 use Scalar::Util 'looks_like_number';
-use namespace::clean;
 use Exporter 'import';
 
 our $VERSION = '0.003';
