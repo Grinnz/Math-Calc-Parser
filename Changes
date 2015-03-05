@@ -1,6 +1,8 @@
 {{$NEXT}}
+  - Fix Exporter usage on older perls
 
 0.003     2015-03-03 19:29:19-05:00 America/New_York
+  - Remove namespace::clean dependency
 
 0.002     2015-03-03 11:13:24-05:00 America/New_York
   - Fixes for compatibility with older perls

@@ -5,9 +5,10 @@ use Carp 'croak';
 use Math::Complex;
 use POSIX qw/ceil floor/;
 use Scalar::Util 'looks_like_number';
-use Exporter 'import';
+require Exporter;
 
 our $VERSION = '0.004';
+our @ISA = 'Exporter';
 our @EXPORT_OK = 'calc';
 our $ERROR;
 
