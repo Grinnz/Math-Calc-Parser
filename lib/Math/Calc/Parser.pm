@@ -86,7 +86,7 @@ our $ERROR;
 		rand  => { args => 0, code => sub { rand } },
 	);
 	
-	sub _default_functions { \%functions }
+	sub _default_functions { +{%functions} }
 }
 
 sub new {
