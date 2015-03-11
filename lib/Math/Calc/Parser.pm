@@ -121,16 +121,16 @@ sub clear_error {
 sub add_functions {
 	my ($self, %functions) = @_;
 	foreach my $name (keys %functions) {
-		croak "Function $name has invalid name" unless $name =~ m/\A\w+\z/;
+		croak "Function \"$name\" has invalid name" unless $name =~ m/\A\w+\z/;
 		my $definition = $functions{$name};
 		$definition = { args => 0, code => $definition } if ref $definition eq 'CODE';
-		croak "No argument count for function $name"
+		croak "No argument count for function \"$name\""
 			unless defined (my $args = $definition->{args});
-		croak "Invalid argument count for function $name"
+		croak "Invalid argument count for function \"$name\""
 			unless $args =~ m/\A\d+\z/ and $args >= 0;
-		croak "No coderef for function $name"
+		croak "No coderef for function \"$name\""
 			unless defined (my $code = $definition->{code});
-		croak "Invalid coderef for function $name" unless ref $code eq 'CODE';
+		croak "Invalid coderef for function \"$name\"" unless ref $code eq 'CODE';
 		$self->_functions->{$name} = { args => $args, code => $code };
 	}
 	return $self;
@@ -192,7 +192,7 @@ sub parse {
 			_shunt_number(\@expr_queue, \@oper_stack, $token);
 			$binop_possible = 1;
 		} elsif ($token =~ m/\A\w+\z/) {
-			die "Invalid function $token\n" unless exists $self->_functions->{$token};
+			die "Invalid function \"$token\"\n" unless exists $self->_functions->{$token};
 			if ($self->_functions->{$token}{args} > 0) {
 				_shunt_function_with_args(\@expr_queue, \@oper_stack, $token);
 				$binop_possible = 0;
@@ -201,7 +201,7 @@ sub parse {
 				$binop_possible = 1;
 			}
 		} else {
-			die "Unknown token $token\n";
+			die "Unknown token \"$token\"\n";
 		}
 	}
 	
@@ -289,10 +289,11 @@ sub evaluate {
 	
 	my @eval_stack;
 	foreach my $token (@$expr) {
+		my $value = $token->{value};
 		if ($token->{type} eq 'number') {
-			push @eval_stack, $token->{value};
-		} elsif (exists $self->_functions->{$token->{value}}) {
-			my $function = $self->_functions->{$token->{value}};
+			push @eval_stack, $value;
+		} elsif (exists $self->_functions->{$value}) {
+			my $function = $self->_functions->{$value};
 			my $num_args = $function->{args};
 			die "Malformed expression\n" if @eval_stack < $num_args;
 			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : 0;
@@ -304,9 +305,13 @@ sub evaluate {
 				$err =~ s/ at .+? line \d+\.$//i;
 				die $err;
 			}
-			push @eval_stack, $result;
+			die "Undefined result from function or operator \"$value\"\n" unless defined $result;
+			{
+				no warnings 'numeric';
+				push @eval_stack, 0+$result;
+			}
 		} else {
-			die "Invalid function or operator: $token->{value}\n";
+			die "Invalid function or operator \"$value\"\n";
 		}
 	}
 	
@@ -441,8 +446,8 @@ exception on failure.
   }
 
 Same as L</"evaluate"> but instead of throwing an exception on failure, returns
-undef and sets $Math::Calc::Parser::ERROR to the error message. If called on an
-object instance, the error can be retrieved using the L</"error"> accessor.
+undef and sets C<$Math::Calc::Parser::ERROR> to the error message. If called on
+an object instance, the error can be retrieved using the L</"error"> accessor.
 
 =head2 add_functions
 
@@ -458,7 +463,8 @@ Values are either a hashref containing C<args> and C<code> keys, or a coderef
 that is assumed to be a 0-argument function. C<args> must be an integer greater
 than or equal to C<0>. C<code> or the passed coderef will be called with the
 numeric operands passed as parameters, and must either return a numeric result
-or throw an exception.
+or throw an exception. Non-numeric results will be cast to numbers in the usual
+perl fashion, and undefined results will throw an evaluation error.
 
 =head2 remove_functions
 
@@ -475,7 +481,7 @@ definitions.
 
   +, -, *, /, %, ^, <<, >>
 
-Note: + and - can represent a unary operation (negation) in addition to
+Note: C<+> and C<-> can represent a unary operation (negation) in addition to
 addition and subtraction.
 
 =head1 DEFAULT FUNCTIONS
@@ -554,8 +560,8 @@ While parentheses are optional for functions with 0 or 1 argument, they are
 required when a comma is used to separate multiple arguments.
 
 Due to the nature of handling complex numbers, the evaluated result may be a
-Math::Complex object. These objects can be directly printed or used in numeric
-operations but may be more difficult to use in comparisons.
+L<Math::Complex> object. These objects can be directly printed or used in
+numeric operations but may be more difficult to use in comparisons.
 
 =head1 BUGS
 

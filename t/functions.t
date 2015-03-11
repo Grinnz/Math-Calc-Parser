@@ -12,6 +12,8 @@ is $parser->evaluate('my_function(2,3)'), 6, 'Added two-arg function';
 is $parser->try_evaluate('my_function 2'), undef, 'Exception calling two-arg function with one arg';
 $parser->remove_functions('pi');
 is $parser->try_evaluate('pi'), undef, 'Removed function "pi"';
+$parser->add_functions(text => sub { '45blah' });
+is $parser->evaluate('text'), 45, 'Results cast to number';
 
 my $parser2 = Math::Calc::Parser->new;
 is $parser2->try_evaluate('my_function(2,3)'), undef, 'Custom function specific to parser object';

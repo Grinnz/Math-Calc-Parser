@@ -19,6 +19,9 @@ $res = eval { $parser->evaluate([{type => 'unknown', value => 'unknown'}]); 1 };
 ok !$res, "Exception: $@";
 $res = eval { calc '5/0'; 1 };
 ok !$res, "Exception: $@";
+$parser->add_functions(undef => sub { undef });
+$res = eval { $parser->evaluate('undef') };
+ok !$res, "Exception: $@";
 my $result = $parser->try_evaluate([{type => 'number', value => 2},
 	{type => 'number', value => 3}]);
 is $result, undef, "Exception evaluating expression";

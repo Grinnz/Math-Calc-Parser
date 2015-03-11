@@ -109,8 +109,8 @@ exception on failure.
   }
 
 Same as L</"evaluate"> but instead of throwing an exception on failure, returns
-undef and sets $Math::Calc::Parser::ERROR to the error message. If called on an
-object instance, the error can be retrieved using the L</"error"> accessor.
+undef and sets C<$Math::Calc::Parser::ERROR> to the error message. If called on
+an object instance, the error can be retrieved using the L</"error"> accessor.
 
 =head2 add_functions
 
@@ -126,7 +126,8 @@ Values are either a hashref containing C<args> and C<code> keys, or a coderef
 that is assumed to be a 0-argument function. C<args> must be an integer greater
 than or equal to C<0>. C<code> or the passed coderef will be called with the
 numeric operands passed as parameters, and must either return a numeric result
-or throw an exception.
+or throw an exception. Non-numeric results will be cast to numbers in the usual
+perl fashion, and undefined results will throw an evaluation error.
 
 =head2 remove_functions
 
@@ -143,7 +144,7 @@ definitions.
 
   +, -, *, /, %, ^, <<, >>
 
-Note: + and - can represent a unary operation (negation) in addition to
+Note: C<+> and C<-> can represent a unary operation (negation) in addition to
 addition and subtraction.
 
 =head1 DEFAULT FUNCTIONS
@@ -222,8 +223,8 @@ While parentheses are optional for functions with 0 or 1 argument, they are
 required when a comma is used to separate multiple arguments.
 
 Due to the nature of handling complex numbers, the evaluated result may be a
-Math::Complex object. These objects can be directly printed or used in numeric
-operations but may be more difficult to use in comparisons.
+L<Math::Complex> object. These objects can be directly printed or used in
+numeric operations but may be more difficult to use in comparisons.
 
 =head1 BUGS
 

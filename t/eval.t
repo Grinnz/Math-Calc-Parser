@@ -26,7 +26,7 @@ cmp_ok $result, '==', cplx(2)**(3*(4+5)), 'Evaluated 2^(3*(4+5))';
 $result = $parser->evaluate([{type => 'function', value => 'i'},
 	{type => 'function', value => 'i'},
 	{type => 'operator', value => '*'}]);
-cmp_ok $result, '==', i*i, 'Evaluated i*i';
+cmp_ok $result, '==', -1, 'Evaluated i*i';
 $result = $parser->evaluate([{type => 'number', value => 1},
 	{type => 'operator', value => 'u-'},
 	{type => 'function', value => 'sqrt'}]);

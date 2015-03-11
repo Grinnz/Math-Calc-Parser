@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Handle custom functions returning undefined or non-numeric results
 
 0.005     2015-03-11 01:04:01-04:00 America/New_York
   - Fix add_functions and remove_functions modifying default function hash
