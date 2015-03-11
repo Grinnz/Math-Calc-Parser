@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.006     2015-03-11 01:53:16-04:00 America/New_York
   - Handle custom functions returning undefined or non-numeric results
 
 0.005     2015-03-11 01:04:01-04:00 America/New_York
