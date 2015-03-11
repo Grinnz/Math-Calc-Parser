@@ -7,7 +7,7 @@ use POSIX qw/ceil floor/;
 use Scalar::Util 'looks_like_number';
 require Exporter;
 
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 our @ISA = 'Exporter';
 our @EXPORT_OK = 'calc';
 our $ERROR;
