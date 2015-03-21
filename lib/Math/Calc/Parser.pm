@@ -293,13 +293,11 @@ sub evaluate {
 	my @eval_stack;
 	foreach my $token (@$expr) {
 		die "Undefined token in evaluate\n" unless defined $token;
-		if ($token =~ /^[\d.]/) {
-			push @eval_stack, $token;
-		} elsif (exists $self->_functions->{$token}) {
+		if (exists $self->_functions->{$token}) {
 			my $function = $self->_functions->{$token};
 			my $num_args = $function->{args};
 			die "Malformed expression\n" if @eval_stack < $num_args;
-			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : 0;
+			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : ();
 			local $@;
 			my $result;
 			my $rc = eval { $result = $function->{code}(@args); 1 };
@@ -313,6 +311,8 @@ sub evaluate {
 				no warnings 'numeric';
 				push @eval_stack, 0+$result;
 			}
+		} elsif (looks_like_number $token) {
+			push @eval_stack, $token;
 		} else {
 			die "Invalid function or operator \"$token\"\n";
 		}
