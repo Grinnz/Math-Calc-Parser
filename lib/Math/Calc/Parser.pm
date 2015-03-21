@@ -4,7 +4,7 @@ use warnings;
 use Carp 'croak';
 use Math::Complex;
 use POSIX qw/ceil floor/;
-use Scalar::Util 'looks_like_number';
+use Scalar::Util qw/blessed looks_like_number/;
 require Exporter;
 
 our $VERSION = '0.009';
@@ -56,7 +56,7 @@ our $ERROR;
 		return $operators{$oper};
 	}
 	
-	sub _real { ref $_[0] ? $_[0]->Re : $_[0] }
+	sub _real { blessed $_[0] ? $_[0]->Re : $_[0] }
 	
 	my %functions = (
 		'<<'  => { args => 2, code => sub { _real($_[0]) << _real($_[1]) } },
@@ -212,7 +212,7 @@ sub parse {
 	while (@oper_stack) {
 		die "Mismatched parentheses\n"
 			if $oper_stack[-1]{type} eq 'paren';
-		push @expr_queue, pop @oper_stack;
+		push @expr_queue, (pop @oper_stack)->{value};
 	}
 	
 	return \@expr_queue;
@@ -220,7 +220,7 @@ sub parse {
 
 sub _shunt_number {
 	my ($expr_queue, $oper_stack, $num) = @_;
-	push @$expr_queue, { type => 'number', value => $num };
+	push @$expr_queue, $num;
 	return 1;
 }
 
@@ -232,7 +232,7 @@ sub _shunt_operator {
 		my $top_oper = $oper_stack->[-1]{value};
 		if ($oper_stat->{lower_than}{$top_oper}
 		    or ($assoc eq 'left' and $oper_stat->{equal_to}{$top_oper})) {
-			push @$expr_queue, pop @$oper_stack;
+			push @$expr_queue, (pop @$oper_stack)->{value};
 		} else {
 			last;
 		}
@@ -249,7 +249,7 @@ sub _shunt_function_with_args {
 
 sub _shunt_function_no_args {
 	my ($expr_queue, $oper_stack, $function) = @_;
-	push @$expr_queue, { type => 'function', value => $function };
+	push @$expr_queue, $function;
 	return 1;
 }
 
@@ -262,12 +262,12 @@ sub _shunt_left_paren {
 sub _shunt_right_paren {
 	my ($expr_queue, $oper_stack) = @_;
 	while (@$oper_stack and $oper_stack->[-1]{type} ne 'paren') {
-		push @$expr_queue, pop @$oper_stack;
+		push @$expr_queue, (pop @$oper_stack)->{value};
 	}
 	return 0 unless @$oper_stack and $oper_stack->[-1]{type} eq 'paren';
 	pop @$oper_stack;
 	if (@$oper_stack and $oper_stack->[-1]{type} eq 'function') {
-		push @$expr_queue, pop @$oper_stack;
+		push @$expr_queue, (pop @$oper_stack)->{value};
 	}
 	return 1;
 }
@@ -275,13 +275,13 @@ sub _shunt_right_paren {
 sub _shunt_comma {
 	my ($expr_queue, $oper_stack) = @_;
 	while (@$oper_stack and $oper_stack->[-1]{type} ne 'paren') {
-		push @$expr_queue, pop @$oper_stack;
+		push @$expr_queue, (pop @$oper_stack)->{value};
 	}
 	return 0 unless @$oper_stack and $oper_stack->[-1]{type} eq 'paren';
 	return 1;
 }
 
-sub calc { shift if ref $_[0]; Math::Calc::Parser->evaluate($_[0]); }
+sub calc ($) { Math::Calc::Parser->evaluate($_[0]); }
 
 sub evaluate {
 	my ($self, $expr) = @_;
@@ -292,11 +292,10 @@ sub evaluate {
 	
 	my @eval_stack;
 	foreach my $token (@$expr) {
-		my $value = $token->{value};
-		if ($token->{type} eq 'number') {
-			push @eval_stack, $value;
-		} elsif (exists $self->_functions->{$value}) {
-			my $function = $self->_functions->{$value};
+		if (blessed $token or $token =~ /^[\d.]/) {
+			push @eval_stack, $token;
+		} elsif (exists $self->_functions->{$token}) {
+			my $function = $self->_functions->{$token};
 			my $num_args = $function->{args};
 			die "Malformed expression\n" if @eval_stack < $num_args;
 			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : 0;
@@ -308,13 +307,13 @@ sub evaluate {
 				$err =~ s/ at .+? line \d+\.$//i;
 				die $err;
 			}
-			die "Undefined result from function or operator \"$value\"\n" unless defined $result;
+			die "Undefined result from function or operator \"$token\"\n" unless defined $result;
 			{
 				no warnings 'numeric';
 				push @eval_stack, 0+$result;
 			}
 		} else {
-			die "Invalid function or operator \"$value\"\n";
+			die "Invalid function or operator \"$token\"\n";
 		}
 	}
 	
@@ -353,7 +352,8 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   my $result = calc '2 + 2'; # 4
   my $result = calc 'int rand 5'; # Random integer between 0 and 4
   my $result = calc 'sqrt -1'; # i
-  eval { $result = calc '1/0'; 1 } or die $@; # Division by 0 exception
+  my $result = calc '0xff << 2'; # 1020
+  my $result = calc '1/0'; # Division by 0 exception
   
   # Class methods
   my $result = Math::Calc::Parser->evaluate('2 + 2'); # 4

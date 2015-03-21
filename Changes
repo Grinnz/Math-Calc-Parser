@@ -1,5 +1,6 @@
 {{$NEXT}}
   - Require function names to start with alphabetic character
+  - Pass direct arrayref of RPN values to parse method
 
 0.008     2015-03-21 14:48:30-04:00 America/New_York
   - Use real portion of complex numbers for real-number functions and operators
