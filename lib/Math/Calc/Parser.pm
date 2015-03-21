@@ -292,7 +292,8 @@ sub evaluate {
 	
 	my @eval_stack;
 	foreach my $token (@$expr) {
-		if (blessed $token or $token =~ /^[\d.]/) {
+		die "Undefined token in evaluate\n" unless defined $token;
+		if ($token =~ /^[\d.]/) {
 			push @eval_stack, $token;
 		} elsif (exists $self->_functions->{$token}) {
 			my $function = $self->_functions->{$token};
