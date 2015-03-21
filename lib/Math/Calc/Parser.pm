@@ -80,6 +80,7 @@ our $ERROR;
 		asin  => { args => 1, code => sub { asin $_[0] } },
 		acos  => { args => 1, code => sub { acos $_[0] } },
 		atan  => { args => 1, code => sub { atan $_[0] } },
+		abs   => { args => 1, code => sub { abs $_[0] } },
 		int   => { args => 1, code => sub { int $_[0] } },
 		floor => { args => 1, code => sub { floor $_[0] } },
 		ceil  => { args => 1, code => sub { ceil $_[0] } },
@@ -347,18 +348,18 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
 
   use Math::Calc::Parser 'calc';
   
-  my $result = calc '2 + 2';
-  my $result = calc 'int rand 5';
-  my $result = calc 'sqrt -1';
-  eval { $result = calc '1/0'; 1 } or die $@;
+  my $result = calc '2 + 2'; # 4
+  my $result = calc 'int rand 5'; # Random integer between 0 and 4
+  my $result = calc 'sqrt -1'; # i
+  eval { $result = calc '1/0'; 1 } or die $@; # Division by 0 exception
   
   # Class methods
-  my $result = Math::Calc::Parser->evaluate('2 + 2');
-  my $result = Math::Calc::Parser->evaluate('3pi^2');
-  my $result = Math::Calc::Parser->evaluate('0.7(ln 4)');
+  my $result = Math::Calc::Parser->evaluate('2 + 2'); # 4
+  my $result = Math::Calc::Parser->evaluate('3pi^2'); # 29.608813203268
+  my $result = Math::Calc::Parser->evaluate('0.7(ln 4)'); # 0.970406052783923
   
   # With more advanced error handling
-  my $result = Math::Calc::Parser->try_evaluate('malformed(expression');
+  my $result = Math::Calc::Parser->try_evaluate('rand(abs'); # undef (Mismatched parentheses)
   if (defined $result) {
     print "Result: $result\n";
   } else {
@@ -371,13 +372,13 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   $parser->add_functions(pow => { args => 2, code => sub { $_[0] ** $_[1] });
   $parser->add_functions(one => sub { 1 }, two => sub { 2 }, three => sub { 3 });
   
-  my $result = $parser->evaluate('2(triple one)'); # returns 6
-  my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3
-  my $result = $parser->try_evaluate('triple triple');
+  my $result = $parser->evaluate('2(triple one)'); # 2*(1*3) = 6
+  my $result = $parser->evaluate('pow(triple two, three)'); # (2*3)^3 = 216
+  my $result = $parser->try_evaluate('triple triple'); # undef (Malformed expression)
   die $parser->error unless defined $result;
   
   $parser->remove_functions('pi', 'e');
-  $parser->evaluate('3pi'); # dies
+  $parser->evaluate('3pi'); # Invalid function exception
 
 =head1 DESCRIPTION
 
@@ -396,7 +397,7 @@ customized using L</"add_functions"> and L</"remove_functions">.
   use Math::Calc::Parser 'calc';
   my $result = calc '2+2';
   
-  $ perl -MMath::Calc::Parser -E 'say calc "2+2"'
+  $ perl -MMath::Calc::Parser=calc -E 'say calc "2+2"'
 
 Compact exportable function wrapping L</"evaluate"> for string expressions.
 Throws an exception on error.
@@ -492,6 +493,10 @@ instance.
 
 =over
 
+=item abs
+
+Absolute value.
+
 =item acos
 
 =item asin
@@ -542,7 +547,7 @@ Log with arbitrary base given as second argument.
 
 =item rand
 
-Random value between 0 and 1.
+Random value between 0 and 1 (exclusive of 1).
 
 =item sin
 
@@ -551,6 +556,10 @@ Sine.
 =item sqrt
 
 Square root.
+
+=item tan
+
+Tangent.
 
 =back
 
