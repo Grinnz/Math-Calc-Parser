@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Use real portion of complex numbers for real-number functions and operators
 
 0.007     2015-03-21 14:16:11-04:00 America/New_York
   - Doc updates

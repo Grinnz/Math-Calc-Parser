@@ -56,15 +56,17 @@ our $ERROR;
 		return $operators{$oper};
 	}
 	
+	sub _real { ref $_[0] ? $_[0]->Re : $_[0] }
+	
 	my %functions = (
-		'<<'  => { args => 2, code => sub { $_[0] << $_[1] } },
-		'>>'  => { args => 2, code => sub { $_[0] >> $_[1] } },
+		'<<'  => { args => 2, code => sub { _real($_[0]) << _real($_[1]) } },
+		'>>'  => { args => 2, code => sub { _real($_[0]) >> _real($_[1]) } },
 		'+'   => { args => 2, code => sub { $_[0] + $_[1] } },
 		'-'   => { args => 2, code => sub { $_[0] - $_[1] } },
 		'*'   => { args => 2, code => sub { $_[0] * $_[1] } },
 		'/'   => { args => 2, code => sub { $_[0] / $_[1] } },
-		'%'   => { args => 2, code => sub { $_[0] % $_[1] } },                                           
-		'^'   => { args => 2, code => sub { cplx($_[0]) ** $_[1] } },
+		'%'   => { args => 2, code => sub { _real($_[0]) % _real($_[1]) } },
+		'^'   => { args => 2, code => sub { $_[0] ** $_[1] } },
 		'u-'  => { args => 1, code => sub { -$_[0] } },
 		'u+'  => { args => 1, code => sub { +$_[0] } },
 		sqrt  => { args => 1, code => sub { sqrt $_[0] } },
@@ -81,9 +83,9 @@ our $ERROR;
 		acos  => { args => 1, code => sub { acos $_[0] } },
 		atan  => { args => 1, code => sub { atan $_[0] } },
 		abs   => { args => 1, code => sub { abs $_[0] } },
-		int   => { args => 1, code => sub { int $_[0] } },
-		floor => { args => 1, code => sub { floor $_[0] } },
-		ceil  => { args => 1, code => sub { ceil $_[0] } },
+		int   => { args => 1, code => sub { int _real($_[0]) } },
+		floor => { args => 1, code => sub { floor _real($_[0]) } },
+		ceil  => { args => 1, code => sub { ceil _real($_[0]) } },
 		rand  => { args => 0, code => sub { rand } },
 	);
 	
