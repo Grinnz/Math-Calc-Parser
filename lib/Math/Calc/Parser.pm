@@ -124,7 +124,7 @@ sub clear_error {
 sub add_functions {
 	my ($self, %functions) = @_;
 	foreach my $name (keys %functions) {
-		croak "Function \"$name\" has invalid name" unless $name =~ m/\A\w+\z/;
+		croak "Function \"$name\" has invalid name" unless $name =~ m/\A[a-z]\w*\z/i;
 		my $definition = $functions{$name};
 		$definition = { args => 0, code => $definition } if ref $definition eq 'CODE';
 		croak "No argument count for function \"$name\""
@@ -460,7 +460,7 @@ an object instance, the error can be retrieved using the L</"error"> accessor.
   );
 
 Adds functions to be recognized by the parser object. Keys are function names
-and must consist only of
+which must start with an alphabetic character and consist only of
 L<word characters|http://perldoc.perl.org/perlrecharclass.html#Word-characters>.
 Values are either a hashref containing C<args> and C<code> keys, or a coderef
 that is assumed to be a 0-argument function. C<args> must be an integer greater
