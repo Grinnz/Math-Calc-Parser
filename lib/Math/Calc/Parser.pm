@@ -453,7 +453,7 @@ exception on failure.
     print "Error: $Math::Calc::Parser::ERROR\n";
   }
   
-  if (defined (my $result = $parser->evaluate('log(5')) {
+  if (defined (my $result = $parser->evaluate('log(5'))) {
   	print "Result: $result\n";
   } else {
   	print "Error: ".$parser->error."\n";
