@@ -91,8 +91,6 @@ our $ERROR;
 	
 	sub _default_functions { +{%functions} }
 	
-	sub _paren { !!(defined $_[0] and ($_[0] eq '(' or $_[0] eq ')')) }
-	
 	my $singleton;
 	sub _instance { blessed $_[0] ? $_[0] : ($singleton //= $_[0]->new) }
 }
@@ -215,7 +213,7 @@ sub parse {
 	
 	# Leftover operators go at the end
 	while (@oper_stack) {
-		die "Mismatched parentheses\n" if _paren($oper_stack[-1]);
+		die "Mismatched parentheses\n" if $oper_stack[-1] eq '(';
 		push @expr_queue, pop @oper_stack;
 	}
 	
@@ -264,12 +262,12 @@ sub _shunt_left_paren {
 
 sub _shunt_right_paren {
 	my ($expr_queue, $oper_stack) = @_;
-	while (@$oper_stack and !_paren($oper_stack->[-1])) {
+	while (@$oper_stack and $oper_stack->[-1] ne '(') {
 		push @$expr_queue, pop @$oper_stack;
 	}
-	return 0 unless @$oper_stack and _paren($oper_stack->[-1]);
+	return 0 unless @$oper_stack and $oper_stack->[-1] eq '(';
 	pop @$oper_stack;
-	if (@$oper_stack and !_paren($oper_stack->[-1])
+	if (@$oper_stack and $oper_stack->[-1] ne '('
 	    and !defined _operator($oper_stack->[-1])) {
 		# Not parentheses or operator, must be function
 		push @$expr_queue, pop @$oper_stack;
@@ -279,10 +277,10 @@ sub _shunt_right_paren {
 
 sub _shunt_comma {
 	my ($expr_queue, $oper_stack) = @_;
-	while (@$oper_stack and !_paren($oper_stack->[-1])) {
+	while (@$oper_stack and $oper_stack->[-1] ne '(') {
 		push @$expr_queue, pop @$oper_stack;
 	}
-	return 0 unless @$oper_stack and _paren($oper_stack->[-1]);
+	return 0 unless @$oper_stack and $oper_stack->[-1] eq '(';
 	return 1;
 }
 
