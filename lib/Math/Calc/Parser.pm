@@ -60,6 +60,10 @@ use constant ROUND_HALF => 0.50000000000008;
 	}
 	
 	sub _real { blessed $_[0] ? $_[0]->Re : $_[0] }
+	sub _each { blessed $_[0] ? cplx($_[1]->($_[0]->Re), $_[1]->($_[0]->Im)) : $_[1]->($_[0]) }
+	
+	# Adapted from Math::Round
+	sub _round { $_[0] >= 0 ? floor($_[0] + ROUND_HALF) : ceil($_[0] - ROUND_HALF) }
 	
 	my %functions = (
 		'<<'  => { args => 2, code => sub { _real($_[0]) << _real($_[1]) } },
@@ -86,14 +90,11 @@ use constant ROUND_HALF => 0.50000000000008;
 		acos  => { args => 1, code => sub { acos $_[0] } },
 		atan  => { args => 1, code => sub { atan $_[0] } },
 		abs   => { args => 1, code => sub { abs $_[0] } },
-		int   => { args => 1, code => sub { int _real($_[0]) } },
-		floor => { args => 1, code => sub { floor _real($_[0]) } },
-		ceil  => { args => 1, code => sub { ceil _real($_[0]) } },
 		rand  => { args => 0, code => sub { rand } },
-		# Adapted from Math::Round
-		round => { args => 1, code => sub { _real($_[0]) >= 0
-		                                    ? floor(_real($_[0]) + ROUND_HALF)
-		                                    : ceil(_real($_[0]) - ROUND_HALF) } },
+		int   => { args => 1, code => sub { _each($_[0], sub { int $_[0] }) } },
+		floor => { args => 1, code => sub { _each($_[0], sub { floor $_[0] }) } },
+		ceil  => { args => 1, code => sub { _each($_[0], sub { ceil $_[0] }) } },
+		round => { args => 1, code => sub { _each($_[0], sub { _round $_[0] }) } },
 	);
 	
 	sub _default_functions { +{%functions} }
@@ -594,10 +595,9 @@ Due to the nature of handling complex numbers, the evaluated result may be a
 L<Math::Complex> object. These objects can be directly printed or used in
 numeric operations but may be more difficult to use in comparisons.
 
-Operators and functions that are not defined to operate on complex numbers will
-return the result of the operation on the real components of their operands.
-This includes the operators C<E<lt>E<lt>>, C<E<gt>E<gt>>, and C<%>, and the
-functions C<int>, C<floor>, C<ceil>, and C<round>.
+Operators that are not defined to operate on complex numbers will return the
+result of the operation on the real components of their operands. This includes
+the operators C<E<lt>E<lt>>, C<E<gt>E<gt>>, and C<%>.
 
 =head1 BUGS
 
