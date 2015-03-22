@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.013     2015-03-22 16:59:14-04:00 America/New_York
   - Allow error attribute to be used for try_evaluate called as class method
 
 0.012     2015-03-22 16:30:08-04:00 America/New_York
