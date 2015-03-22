@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Slight performance boost for repeated class method or calc function calls
 
 0.010     2015-03-21 18:47:19-04:00 America/New_York
   - Fix evaluate to allow inf and nan as numbers

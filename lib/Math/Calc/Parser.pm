@@ -90,6 +90,11 @@ our $ERROR;
 	);
 	
 	sub _default_functions { +{%functions} }
+	
+	sub _paren { !!(defined $_[0] and ($_[0] eq '(' or $_[0] eq ')')) }
+	
+	my $singleton;
+	sub _instance { blessed $_[0] ? $_[0] : ($singleton //= $_[0]->new) }
 }
 
 sub new {
@@ -159,7 +164,7 @@ my $token_re = qr{(
 
 sub parse {
 	my ($self, $expr) = @_;
-	$self = $self->new unless ref $self;
+	$self = _instance($self);
 	my (@expr_queue, @oper_stack, $binop_possible);
 	while ($expr =~ /$token_re/g) {
 		my ($token, $octal) = ($1, $2);
@@ -210,9 +215,8 @@ sub parse {
 	
 	# Leftover operators go at the end
 	while (@oper_stack) {
-		die "Mismatched parentheses\n"
-			if $oper_stack[-1]{type} eq 'paren';
-		push @expr_queue, (pop @oper_stack)->{value};
+		die "Mismatched parentheses\n" if _paren($oper_stack[-1]);
+		push @expr_queue, pop @oper_stack;
 	}
 	
 	return \@expr_queue;
@@ -228,22 +232,21 @@ sub _shunt_operator {
 	my ($expr_queue, $oper_stack, $oper) = @_;
 	my $oper_stat = _operator($oper);
 	my $assoc = $oper_stat->{assoc};
-	while (@$oper_stack and $oper_stack->[-1]{type} eq 'operator') {
-		my $top_oper = $oper_stack->[-1]{value};
+	while (@$oper_stack and defined _operator(my $top_oper = $oper_stack->[-1])) {
 		if ($oper_stat->{lower_than}{$top_oper}
 		    or ($assoc eq 'left' and $oper_stat->{equal_to}{$top_oper})) {
-			push @$expr_queue, (pop @$oper_stack)->{value};
+			push @$expr_queue, pop @$oper_stack;
 		} else {
 			last;
 		}
 	}
-	push @$oper_stack, { type => 'operator', value => $oper };
+	push @$oper_stack, $oper;
 	return 1;
 }
 
 sub _shunt_function_with_args {
 	my ($expr_queue, $oper_stack, $function) = @_;
-	push @$oper_stack, { type => 'function', value => $function };
+	push @$oper_stack, $function;
 	return 1;
 }
 
@@ -255,37 +258,39 @@ sub _shunt_function_no_args {
 
 sub _shunt_left_paren {
 	my ($expr_queue, $oper_stack) = @_;
-	push @$oper_stack, { type => 'paren', value => '(' };
+	push @$oper_stack, '(';
 	return 1;
 }
 
 sub _shunt_right_paren {
 	my ($expr_queue, $oper_stack) = @_;
-	while (@$oper_stack and $oper_stack->[-1]{type} ne 'paren') {
-		push @$expr_queue, (pop @$oper_stack)->{value};
+	while (@$oper_stack and !_paren($oper_stack->[-1])) {
+		push @$expr_queue, pop @$oper_stack;
 	}
-	return 0 unless @$oper_stack and $oper_stack->[-1]{type} eq 'paren';
+	return 0 unless @$oper_stack and _paren($oper_stack->[-1]);
 	pop @$oper_stack;
-	if (@$oper_stack and $oper_stack->[-1]{type} eq 'function') {
-		push @$expr_queue, (pop @$oper_stack)->{value};
+	if (@$oper_stack and !_paren($oper_stack->[-1])
+	    and !defined _operator($oper_stack->[-1])) {
+		# Not parentheses or operator, must be function
+		push @$expr_queue, pop @$oper_stack;
 	}
 	return 1;
 }
 
 sub _shunt_comma {
 	my ($expr_queue, $oper_stack) = @_;
-	while (@$oper_stack and $oper_stack->[-1]{type} ne 'paren') {
-		push @$expr_queue, (pop @$oper_stack)->{value};
+	while (@$oper_stack and !_paren($oper_stack->[-1])) {
+		push @$expr_queue, pop @$oper_stack;
 	}
-	return 0 unless @$oper_stack and $oper_stack->[-1]{type} eq 'paren';
+	return 0 unless @$oper_stack and _paren($oper_stack->[-1]);
 	return 1;
 }
 
-sub calc ($) { Math::Calc::Parser->evaluate($_[0]); }
+sub calc ($) { __PACKAGE__->evaluate($_[0]) }
 
 sub evaluate {
 	my ($self, $expr) = @_;
-	$self = $self->new unless ref $self;
+	$self = _instance($self);
 	$expr = $self->parse($expr) unless ref $expr eq 'ARRAY';
 	
 	die "No expression to evaluate\n" unless @$expr;
@@ -325,7 +330,7 @@ sub evaluate {
 
 sub try_evaluate {
 	my ($self, $expr) = @_;
-	$self = $self->new unless ref $self;
+	$self = _instance($self);
 	$self->clear_error;
 	undef $ERROR;
 	local $@;
