@@ -28,5 +28,6 @@ ok $parser->error, "Exception is ".$parser->error;
 $result = Math::Calc::Parser->try_evaluate('');
 is $result, undef, "Exception evaluating expression";
 ok $Math::Calc::Parser::ERROR, "Exception is $Math::Calc::Parser::ERROR";
+ok +Math::Calc::Parser->error, "Exception is ".Math::Calc::Parser->error;
 
 done_testing;

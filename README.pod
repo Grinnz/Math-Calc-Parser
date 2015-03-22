@@ -26,7 +26,7 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   if (defined $result) {
     print "Result: $result\n";
   } else {
-    print "Error: $Math::Calc::Parser::ERROR\n";
+    print "Error: ".Math::Calc::Parser->error."\n";
   }
   
   # Or as an object for more control
@@ -100,7 +100,7 @@ exception on failure.
   if (defined (my $result = Math::Calc::Parser->evaluate('floor 2.5'))) {
     print "Result: $result\n";
   } else {
-    print "Error: $Math::Calc::Parser::ERROR\n";
+    print "Error: ".Math::Calc::Parser->error."\n";
   }
   
   if (defined (my $result = $parser->evaluate('log(5'))) {
@@ -110,8 +110,9 @@ exception on failure.
   }
 
 Same as L</"evaluate"> but instead of throwing an exception on failure, returns
-undef and sets C<$Math::Calc::Parser::ERROR> to the error message. If called on
-an object instance, the error can be retrieved using the L</"error"> accessor.
+undef and sets the L</"error"> attribute to the error message. The error
+message for the most recent L</"try_evaluate"> call can also be retrieved from
+the global variable C<$Math::Calc::Parser::ERROR>.
 
 =head2 add_functions
 
