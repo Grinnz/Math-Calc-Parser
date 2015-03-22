@@ -17,6 +17,8 @@ is calc 'ceil 2.5', 3, 'Ceiling';
 is calc 'ceil -2.5', -2, 'Ceiling';
 is calc 'floor 2.5', 2, 'Floor';
 is calc 'floor -2.5', -3, 'Floor';
+is calc 'round 2.5', 3, 'Round';
+is calc 'round -2.5', -3, 'Round';
 
 is calc 'acos -1', pi, 'Arccosine';
 is calc 'asin -1', -(pi/2), 'Arcsine';

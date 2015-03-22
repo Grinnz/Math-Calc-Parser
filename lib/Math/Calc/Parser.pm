@@ -12,6 +12,9 @@ our @ISA = 'Exporter';
 our @EXPORT_OK = 'calc';
 our $ERROR;
 
+# See disclaimer in Math::Round
+use constant ROUND_HALF => 0.50000000000008;
+
 {
 	my %operators = (
 		'<<' => { assoc => 'left' },
@@ -87,6 +90,10 @@ our $ERROR;
 		floor => { args => 1, code => sub { floor _real($_[0]) } },
 		ceil  => { args => 1, code => sub { ceil _real($_[0]) } },
 		rand  => { args => 0, code => sub { rand } },
+		# Adapted from Math::Round
+		round => { args => 1, code => sub { _real($_[0]) >= 0
+		                                    ? floor(_real($_[0]) + ROUND_HALF)
+		                                    : ceil(_real($_[0]) - ROUND_HALF) } },
 	);
 	
 	sub _default_functions { +{%functions} }
@@ -555,6 +562,10 @@ Log with arbitrary base given as second argument.
 
 Random value between 0 and 1 (exclusive of 1).
 
+=item round
+
+Round to nearest integer, with halfway cases rounded away from zero.
+
 =item sin
 
 Sine.
@@ -577,6 +588,11 @@ required when a comma is used to separate multiple arguments.
 Due to the nature of handling complex numbers, the evaluated result may be a
 L<Math::Complex> object. These objects can be directly printed or used in
 numeric operations but may be more difficult to use in comparisons.
+
+Operators and functions that are not defined to operate on complex numbers will
+return the result of the operation on the real components of their operands.
+This includes the operators C<E<lt>E<lt>>, C<E<gt>E<gt>>, and C<%>, and the
+functions C<int>, C<floor>, C<ceil>, and C<round>.
 
 =head1 BUGS
 
