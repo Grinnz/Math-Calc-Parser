@@ -99,7 +99,11 @@ use constant ROUND_HALF => 0.50000000000008;
 	sub _default_functions { +{%functions} }
 	
 	my $singleton;
-	sub _instance { blessed $_[0] ? $_[0] : ($singleton //= $_[0]->new) }
+	sub _instance {
+		return $_[0] if blessed $_[0];
+		$singleton = $_[0]->new unless defined $singleton;
+		return $singleton;
+	}
 }
 
 sub new {

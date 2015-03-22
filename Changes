@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Compatibility with older perls
 
 0.011     2015-03-22 16:06:46-04:00 America/New_York
   - Slight performance boost for repeated class method or calc function calls
