@@ -13,6 +13,8 @@ $res = eval { $parser->parse('log , 2'); 1 };
 ok !$res, "Exception: $@";
 $res = eval { $parser->parse('invalid'); 1 };
 ok !$res, "Exception: $@";
+$res = eval { $parser->parse('!'); 1 };
+ok !$res, "Exception: $@";
 $res = eval { $parser->evaluate(['*']); 1 };
 ok !$res, "Exception: $@";
 $res = eval { $parser->evaluate(['unknown']); 1 };

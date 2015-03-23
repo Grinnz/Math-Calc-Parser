@@ -1,4 +1,6 @@
 {{$NEXT}}
+  - Fix exception propagation from parser functions
+  - Throw exception on invalid tokens
 
 0.014     2015-03-22 19:11:47-04:00 America/New_York
   - Change int/floor/ceil/round functions to operate on each component of complex numbers

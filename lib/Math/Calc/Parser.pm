@@ -170,6 +170,7 @@ my $token_re = qr{(
 	| [(),]                             # Parentheses and commas
 	| \w+                               # Functions
 	| (?: [-+*/^%] | << | >> )          # Operators
+	| [^\s\w(),.\-+*/^%<>]+             # Unknown tokens (but skip whitespace)
 )}ix;
 
 sub parse {
@@ -313,13 +314,15 @@ sub evaluate {
 			my $num_args = $function->{args};
 			die "Malformed expression\n" if @eval_stack < $num_args;
 			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : ();
-			local $@;
-			my $result;
-			my $rc = eval { $result = $function->{code}(@args); 1 };
-			unless ($rc) {
-				my $err = $@;
-				$err =~ s/ at .+? line \d+\.$//i;
-				die $err;
+			my ($result, $error);
+			{
+				local $@;
+				eval { $result = $function->{code}(@args); 1 } or $error = $@;
+			}
+			if (defined $error) {
+				$error =~ s/ at .+? line \d+\.$//i;
+				chomp $error;
+				die "$error\n";
 			}
 			die "Undefined result from function or operator \"$token\"\n" unless defined $result;
 			{
@@ -345,11 +348,10 @@ sub try_evaluate {
 	undef $ERROR;
 	local $@;
 	my $result;
-	my $rc = eval { $result = $self->evaluate($expr); 1 };
-	unless ($rc) {
-		my $err = $@;
-		chomp $err;
-		$self->_set_error($ERROR = $err);
+	unless (eval { $result = $self->evaluate($expr); 1 }) {
+		my $error = $@;
+		chomp $error;
+		$self->_set_error($ERROR = $error);
 		return undef;
 	}
 	return $result;
