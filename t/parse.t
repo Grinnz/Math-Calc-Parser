@@ -40,6 +40,8 @@ $parsed = $parser->parse('2--3');
 is_deeply $parsed, [2,3,'u-','-'], 'Parsed unary minus';
 $parsed = $parser->parse('2-+3');
 is_deeply $parsed, [2,3,'u+','-'], 'Parsed unary plus';
+$parsed = $parser->parse('2!-3');
+is_deeply $parsed, [2,'!',3,'-'], 'Parsed factorial';
 
 $parsed = $parser->parse('ln(5)');
 is_deeply $parsed, [5,'ln'], 'Parsed function';
