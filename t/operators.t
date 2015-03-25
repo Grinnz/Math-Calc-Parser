@@ -11,5 +11,6 @@ is calc '3%2', 1, 'Modulo';
 is calc '3^2', 9, 'Exponent';
 is calc '3<<2', 12, 'Left shift';
 is calc '3>>1', 1, 'Right shift';
+is calc '3!', 6, 'Factorial';
 
 done_testing;

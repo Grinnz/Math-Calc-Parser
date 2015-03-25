@@ -2,6 +2,7 @@ package Math::Calc::Parser;
 use strict;
 use warnings;
 use Carp 'croak';
+use List::Util 'reduce';
 use Math::Complex;
 use POSIX qw/ceil floor/;
 use Scalar::Util qw/blessed looks_like_number/;
@@ -25,6 +26,7 @@ use constant ROUND_HALF => 0.50000000000008;
 		'/'  => { assoc => 'left' },
 		'%'  => { assoc => 'left' },
 		'^'  => { assoc => 'right' },
+		'!'  => { assoc => 'left' },
 		# Dummy operators for unary minus/plus
 		'u-' => { assoc => 'right' },
 		'u+' => { assoc => 'right' },
@@ -37,6 +39,7 @@ use constant ROUND_HALF => 0.50000000000008;
 		['*','/','%'],
 		['u-','u+'],
 		['^'],
+		['!'],
 	);
 	
 	# Cache operator precedence
@@ -74,6 +77,8 @@ use constant ROUND_HALF => 0.50000000000008;
 		'/'   => { args => 2, code => sub { $_[0] / $_[1] } },
 		'%'   => { args => 2, code => sub { _real($_[0]) % _real($_[1]) } },
 		'^'   => { args => 2, code => sub { $_[0] ** $_[1] } },
+		'!'   => { args => 1, code => sub { die "Factorial of negative number" if _real($_[0]) < 0;
+		                                    reduce { $a * $b } 1, 1.._real($_[0]) } },
 		'u-'  => { args => 1, code => sub { -$_[0] } },
 		'u+'  => { args => 1, code => sub { +$_[0] } },
 		sqrt  => { args => 1, code => sub { sqrt $_[0] } },
@@ -169,8 +174,8 @@ my $token_re = qr{(
 	| (?: \d*\. )? \d+ (?: e[-+]?\d+ )? # Decimal numbers
 	| [(),]                             # Parentheses and commas
 	| \w+                               # Functions
-	| (?: [-+*/^%] | << | >> )          # Operators
-	| [^\s\w(),.\-+*/^%<>]+             # Unknown tokens (but skip whitespace)
+	| (?: [-+*/^%!] | << | >> )         # Operators
+	| [^\s\w(),.\-+*/^%!<>]+            # Unknown tokens (but skip whitespace)
 )}ix;
 
 sub parse {
@@ -195,7 +200,7 @@ sub parse {
 				$token = "u$token";
 			}
 			_shunt_operator(\@expr_queue, \@oper_stack, $token);
-			$binop_possible = 0;
+			$binop_possible = $token eq '!' ? 1 : 0;
 		} elsif ($token eq '(') {
 			_shunt_left_paren(\@expr_queue, \@oper_stack);
 			$binop_possible = 0;
@@ -501,7 +506,7 @@ L</"add_functions">.
 L<Math::Calc::Parser> recognizes the following operators with their usual
 definitions.
 
-  +, -, *, /, %, ^, <<, >>
+  +, -, *, /, %, ^, !, <<, >>
 
 Note: C<+> and C<-> can represent a unary operation (negation) in addition to
 addition and subtraction.
@@ -599,7 +604,7 @@ numeric operations but may be more difficult to use in comparisons.
 
 Operators that are not defined to operate on complex numbers will return the
 result of the operation on the real components of their operands. This includes
-the operators C<E<lt>E<lt>>, C<E<gt>E<gt>>, and C<%>.
+the operators C<E<lt>E<lt>>, C<E<gt>E<gt>>, C<%>, and C<!>.
 
 =head1 BUGS
 
