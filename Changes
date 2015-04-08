@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Added ath module for one-liners
 
 0.016     2015-03-25 02:34:12-04:00 America/New_York
   - Add factorial operator

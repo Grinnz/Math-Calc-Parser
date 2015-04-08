@@ -363,6 +363,8 @@ sub try_evaluate {
 	return $result;
 }
 
+1;
+
 =encoding utf8
 
 =head1 NAME
@@ -424,9 +426,10 @@ customized using L</"add_functions"> and L</"remove_functions">.
   my $result = calc '2+2';
   
   $ perl -MMath::Calc::Parser=calc -E 'say calc "2+2"'
+  $ perl -Math -e '2+2'
 
 Compact exportable function wrapping L</"evaluate"> for string expressions.
-Throws an exception on error.
+Throws an exception on error. See L<ath> for easy compact one-liners.
 
 =head1 ATTRIBUTES
 
@@ -625,7 +628,3 @@ the terms of the Artistic License version 2.0.
 =head1 SEE ALSO
 
 L<Math::Complex>
-
-=cut
-
-1;
