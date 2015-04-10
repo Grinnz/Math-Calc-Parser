@@ -1,11 +1,11 @@
 use strict;
 use warnings;
 use Test::More;
+use File::Temp 'tempfile';
 
-my $buffer = '';
+my $fh = tempfile();
 {
-	open my $handle, '>', \$buffer;
-	local *STDOUT = $handle;
+	local *STDOUT = $fh;
 	use ath;
 	2+2
 	no ath;
@@ -17,7 +17,8 @@ my $buffer = '';
 	no ath;
 }
 
-my @lines = split /\n/, $buffer;
+seek $fh, 0, 0;
+my @lines = map { chomp $_; $_ } <$fh>;
 is $lines[0], 4, 'Evaluated 2+2';
 is $lines[1], -1, 'Evaluated round e^(i pi)';
 is $lines[2], 120, 'Evaluated 5!';

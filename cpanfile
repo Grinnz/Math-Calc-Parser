@@ -7,3 +7,4 @@ requires 'Math::Complex';
 requires 'POSIX';
 requires 'Scalar::Util';
 test_requires 'Test::More' => '0.88';
+test_requires 'File::Temp';
