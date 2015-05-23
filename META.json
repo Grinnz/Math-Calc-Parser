@@ -1,0 +1,70 @@
+{
+   "abstract" : "Parse and evaluate mathematical expressions",
+   "author" : [
+      "Dan Book <dbook@cpan.org>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 5.035, CPAN::Meta::Converter version 2.150001",
+   "license" : [
+      "artistic_2"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : 2
+   },
+   "name" : "Math-Calc-Parser",
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Dist::Zilla::PluginBundle::Author::DBOOK" : "0.003"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Carp" : "0",
+            "Exporter" : "0",
+            "Filter::Simple" : "0",
+            "List::Util" : "0",
+            "Math::Complex" : "0",
+            "POSIX" : "0",
+            "Scalar::Util" : "0",
+            "perl" : "5.006"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "File::Temp" : "0",
+            "Test::More" : "0.88"
+         }
+      }
+   },
+   "provides" : {
+      "Math::Calc::Parser" : {
+         "file" : "lib/Math/Calc/Parser.pm",
+         "version" : "0.019"
+      },
+      "ath" : {
+         "file" : "lib/ath.pm",
+         "version" : "0.019"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/Grinnz/Math-Calc-Parser/issues"
+      },
+      "homepage" : "https://github.com/Grinnz/Math-Calc-Parser",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/Grinnz/Math-Calc-Parser.git",
+         "web" : "https://github.com/Grinnz/Math-Calc-Parser"
+      }
+   },
+   "version" : "0.019"
+}
+
