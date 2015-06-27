@@ -18,7 +18,7 @@ my $fh = tempfile();
 }
 
 seek $fh, 0, 0;
-my @lines = map { chomp $_; $_ } <$fh>;
+chomp(my @lines = <$fh>);
 is $lines[0], 4, 'Evaluated 2+2';
 is $lines[1], -1, 'Evaluated round e^(i pi)';
 is $lines[2], 120, 'Evaluated 5!';
