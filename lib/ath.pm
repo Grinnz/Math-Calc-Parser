@@ -2,7 +2,7 @@ package ath;
 use strict;
 use warnings;
 use Math::Calc::Parser;
-our $VERSION = '0.019';
+our $VERSION = '1.001';
 use Filter::Simple sub {
 	$_ = 'print Math::Calc::Parser::calc "'.quotemeta($_).'", "\n";'
 };
