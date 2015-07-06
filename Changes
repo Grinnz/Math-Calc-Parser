@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Only allow 0-9 to be recognized as digits
 
 0.018     2015-04-10 01:19:52-04:00 America/New_York
   - Use temp file for testing ath to support 5.6

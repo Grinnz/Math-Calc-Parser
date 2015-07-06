@@ -172,7 +172,7 @@ sub remove_functions {
 
 my $token_re = qr{(
 	( 0x[0-9a-f]+ | 0b[01]+ | 0[0-7]+ ) # Octal/hex/binary numbers
-	| (?: \d*\. )? \d+ (?: e[-+]?\d+ )? # Decimal numbers
+	| (?: [0-9]*\. )? [0-9]+ (?: e[-+]?[0-9]+ )? # Decimal numbers
 	| [(),]                             # Parentheses and commas
 	| \w+                               # Functions
 	| (?: [-+*/^%!] | << | >> )         # Operators
