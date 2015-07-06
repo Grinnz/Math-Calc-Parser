@@ -4,13 +4,13 @@
       "Dan Book <dbook@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 5.035, CPAN::Meta::Converter version 2.150001",
+   "generated_by" : "Dist::Zilla version 5.037, CPAN::Meta::Converter version 2.150005",
    "license" : [
       "artistic_2"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : 2
+      "version" : "2"
    },
    "name" : "Math-Calc-Parser",
    "prereqs" : {
@@ -21,7 +21,7 @@
       },
       "develop" : {
          "requires" : {
-            "Dist::Zilla::PluginBundle::Author::DBOOK" : "0.003"
+            "Dist::Zilla::PluginBundle::Author::DBOOK" : "0.005"
          }
       },
       "runtime" : {
@@ -46,11 +46,11 @@
    "provides" : {
       "Math::Calc::Parser" : {
          "file" : "lib/Math/Calc/Parser.pm",
-         "version" : "0.019"
+         "version" : "1.000"
       },
       "ath" : {
          "file" : "lib/ath.pm",
-         "version" : "0.019"
+         "version" : "1.000"
       }
    },
    "release_status" : "stable",
@@ -65,6 +65,6 @@
          "web" : "https://github.com/Grinnz/Math-Calc-Parser"
       }
    },
-   "version" : "0.019"
+   "version" : "1.000"
 }
 
