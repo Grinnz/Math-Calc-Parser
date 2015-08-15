@@ -77,6 +77,12 @@ Returns the error message after a failed L</"try_evaluate">.
 
 =head1 METHODS
 
+=head2 new
+
+  my $parser = Math::Calc::Parser->new;
+
+Creates a new L<Math::Calc::Parser> object.
+
 =head2 parse
 
   my $parsed = Math::Calc::Parser->parse('5 / e^(i*pi)');

@@ -137,7 +137,7 @@ sub _set_error {
 	return $self;
 }
 
-sub clear_error {
+sub _clear_error {
 	my $self = shift;
 	delete $self->{error};
 }
@@ -350,7 +350,7 @@ sub evaluate {
 sub try_evaluate {
 	my ($self, $expr) = @_;
 	$self = _instance($self);
-	$self->clear_error;
+	$self->_clear_error;
 	undef $ERROR;
 	local $@;
 	my $result;
@@ -441,6 +441,12 @@ Throws an exception on error. See L<ath> for easy compact one-liners.
 Returns the error message after a failed L</"try_evaluate">.
 
 =head1 METHODS
+
+=head2 new
+
+  my $parser = Math::Calc::Parser->new;
+
+Creates a new L<Math::Calc::Parser> object.
 
 =head2 parse
 
