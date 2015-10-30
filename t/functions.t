@@ -50,8 +50,19 @@ is $parser->evaluate('text'), 45, 'Results cast to number';
 my $parser2 = Math::Calc::Parser->new;
 is $parser2->try_evaluate('my_function(2,3)'), undef, 'Custom function specific to parser object';
 is $parser2->try_evaluate('pi'), pi, 'Function removal specific to parser object';
+$parser2->remove_functions('*');
+is $parser2->try_evaluate('2*3'), 6, 'Operator function not removed';
 
 ok !eval { $parser->add_functions(_foo => sub { 1 }); 1 }, 'Invalid function name';
+like $@, qr/invalid name/, 'right error';
+ok !eval { $parser->add_functions(foo => { code => sub { 1 } }); 1 }, 'No argument count';
+like $@, qr/argument count/, 'right error';
+ok !eval { $parser->add_functions(foo => { args => 'foo', code => sub { 1 } }); 1 } , 'Invalid argument count';
+like $@, qr/argument count/, 'right error';
+ok !eval { $parser->add_functions(foo => { args => 1 }); 1 }, 'No coderef';
+like $@, qr/coderef/, 'right error';
+ok !eval { $parser->add_functions(foo => { args => 1, code => [] }); 1 } , 'Invalid coderef';
+like $@, qr/coderef/, 'right error';
 
 $parser->add_functions(myCaSe => { args => 1, code => sub { $_[0]*2 } });
 is $parser->try_evaluate('MYcAsE 4'), undef, 'Case sensitive function';
