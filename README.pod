@@ -100,22 +100,22 @@ failure.
 
 =head2 try_evaluate
 
-  if (defined (my $result = Math::Calc::Parser->evaluate('floor 2.5'))) {
+  if (defined (my $result = Math::Calc::Parser->try_evaluate('floor 2.5'))) {
     print "Result: $result\n";
   } else {
     print "Error: ".Math::Calc::Parser->error."\n";
   }
   
-  if (defined (my $result = $parser->evaluate('log(5'))) {
+  if (defined (my $result = $parser->try_evaluate('log(5'))) {
   	print "Result: $result\n";
   } else {
   	print "Error: ".$parser->error."\n";
   }
 
 Same as L</"evaluate"> but instead of throwing an exception on failure, returns
-undef and sets the L</"error"> attribute to the error message. The error
-message for the most recent L</"try_evaluate"> call can also be retrieved from
-the package variable C<$Math::Calc::Parser::ERROR>.
+undef. The L</"error"> method can then be used to retrieve the error message.
+The error message for the most recent L</"try_evaluate"> call can also be
+retrieved from the package variable C<$Math::Calc::Parser::ERROR>.
 
 =head2 error
 
