@@ -66,15 +66,6 @@ customized using L</"add_functions"> and L</"remove_functions">.
 Compact exportable function wrapping L</"evaluate"> for string expressions.
 Throws an exception on error. See L<ath> for easy compact one-liners.
 
-=head1 ATTRIBUTES
-
-=head2 error
-
-  my $result = $parser->try_evaluate('2//');
-  die $parser->error unless defined $result;
-
-Returns the error message after a failed L</"try_evaluate">.
-
 =head1 METHODS
 
 =head2 new
@@ -82,6 +73,13 @@ Returns the error message after a failed L</"try_evaluate">.
   my $parser = Math::Calc::Parser->new;
 
 Creates a new L<Math::Calc::Parser> object.
+
+=head2 error
+
+  my $result = $parser->try_evaluate('2//');
+  die $parser->error unless defined $result;
+
+Returns the error message after a failed L</"try_evaluate">.
 
 =head2 parse
 

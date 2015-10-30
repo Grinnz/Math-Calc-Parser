@@ -104,7 +104,9 @@ use constant ROUND_HALF => 0.50000000000008;
 	);
 	
 	sub _default_functions { +{%functions} }
-	
+}
+
+{
 	my $singleton;
 	sub _instance {
 		return $_[0] if blessed $_[0];
@@ -113,34 +115,13 @@ use constant ROUND_HALF => 0.50000000000008;
 	}
 }
 
-sub new {
-	my $class = shift;
-	my $self = {};
-	bless $self, $class;
-	return $self;
-}
+sub calc ($) { _instance(__PACKAGE__)->evaluate($_[0]) }
 
-sub _functions {
-	my $self = shift;
-	$self->{_functions} = _default_functions() unless defined $self->{_functions};
-	return $self->{_functions};
-}
+sub new { bless {}, shift }
 
-sub error {
-	my $self = _instance(shift);
-	return exists $self->{error} ? $self->{error} : undef;
-}
+sub error { _instance(shift)->{error} }
 
-sub _set_error {
-	my ($self, $error) = @_;
-	$self->{error} = $error;
-	return $self;
-}
-
-sub _clear_error {
-	my $self = shift;
-	delete $self->{error};
-}
+sub _functions { shift->{_functions} ||= _default_functions() }
 
 sub add_functions {
 	my ($self, %functions) = @_;
@@ -162,8 +143,8 @@ sub add_functions {
 
 sub remove_functions {
 	my ($self, @functions) = @_;
-	foreach my $name (grep { defined } @functions) {
-		next unless exists $self->_functions->{$name};
+	foreach my $name (@functions) {
+		next unless defined $name and exists $self->_functions->{$name};
 		next if defined _operator($name); # Do not remove operator functions
 		delete $self->_functions->{$name};
 	}
@@ -303,8 +284,6 @@ sub _shunt_comma {
 	return 1;
 }
 
-sub calc ($) { __PACKAGE__->evaluate($_[0]) }
-
 sub evaluate {
 	my ($self, $expr) = @_;
 	$self = _instance($self);
@@ -320,12 +299,15 @@ sub evaluate {
 			my $num_args = $function->{args};
 			die "Malformed expression\n" if @eval_stack < $num_args;
 			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : ();
-			my ($result, $error);
+			my ($result, $errored, $error);
 			{
 				local $@;
-				eval { $result = $function->{code}(@args); 1 } or $error = $@;
+				unless (eval { $result = $function->{code}(@args); 1 }) {
+					$errored = 1;
+					$error = $@;
+				}
 			}
-			if (defined $error) {
+			if ($errored) {
 				$error =~ s/ at .+? line \d+\.$//i;
 				chomp $error;
 				die "$error\n";
@@ -350,14 +332,13 @@ sub evaluate {
 sub try_evaluate {
 	my ($self, $expr) = @_;
 	$self = _instance($self);
-	$self->_clear_error;
+	delete $self->{error};
 	undef $ERROR;
 	local $@;
 	my $result;
 	unless (eval { $result = $self->evaluate($expr); 1 }) {
-		my $error = $@;
-		chomp $error;
-		$self->_set_error($ERROR = $error);
+		chomp(my $error = $@);
+		$self->{error} = $ERROR = $error;
 		return undef;
 	}
 	return $result;
@@ -431,15 +412,6 @@ customized using L</"add_functions"> and L</"remove_functions">.
 Compact exportable function wrapping L</"evaluate"> for string expressions.
 Throws an exception on error. See L<ath> for easy compact one-liners.
 
-=head1 ATTRIBUTES
-
-=head2 error
-
-  my $result = $parser->try_evaluate('2//');
-  die $parser->error unless defined $result;
-
-Returns the error message after a failed L</"try_evaluate">.
-
 =head1 METHODS
 
 =head2 new
@@ -447,6 +419,13 @@ Returns the error message after a failed L</"try_evaluate">.
   my $parser = Math::Calc::Parser->new;
 
 Creates a new L<Math::Calc::Parser> object.
+
+=head2 error
+
+  my $result = $parser->try_evaluate('2//');
+  die $parser->error unless defined $result;
+
+Returns the error message after a failed L</"try_evaluate">.
 
 =head2 parse
 
