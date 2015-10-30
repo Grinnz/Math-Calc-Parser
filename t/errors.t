@@ -18,7 +18,7 @@ like $@, qr/Unknown token/, 'right error';
 eval { $parser->evaluate(['*']) };
 like $@, qr/Malformed expression/, 'right error';
 eval { $parser->evaluate(['unknown']) };
-like $@, qr/Invalid function or operator/, 'right error';
+like $@, qr/Invalid function/, 'right error';
 eval { calc '5/0' };
 ok length($@), "Exception: $@";
 eval { calc '(-2)!' };

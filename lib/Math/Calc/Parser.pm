@@ -316,7 +316,7 @@ sub evaluate {
 		} elsif (looks_like_number $token) {
 			push @eval_stack, $token;
 		} else {
-			die qq{Invalid function or operator "$token"\n};
+			die qq{Invalid function "$token"\n};
 		}
 	}
 	
