@@ -55,12 +55,7 @@ use constant ROUND_HALF => 0.50000000000008;
 		$lower_prec{$_} = 1 for @$set;
 	}
 	
-	sub _operator {
-		my $oper = shift;
-		croak 'No operator passed' unless defined $oper;
-		return undef unless exists $operators{$oper};
-		return $operators{$oper};
-	}
+	sub _operator { $operators{shift()} }
 	
 	sub _real { blessed $_[0] ? $_[0]->Re : $_[0] }
 	sub _each { blessed $_[0] ? cplx($_[1]->($_[0]->Re), $_[1]->($_[0]->Im)) : $_[1]->($_[0]) }
