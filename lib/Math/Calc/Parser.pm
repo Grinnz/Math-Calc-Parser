@@ -136,7 +136,7 @@ sub add_functions {
 		croak "No coderef for function \"$name\""
 			unless defined (my $code = $definition->{code});
 		croak "Invalid coderef for function \"$name\"" unless ref $code eq 'CODE';
-		$self->_functions->{lc $name} = { args => $args, code => $code };
+		$self->_functions->{$name} = { args => $args, code => $code };
 	}
 	return $self;
 }
@@ -145,7 +145,6 @@ sub remove_functions {
 	my ($self, @functions) = @_;
 	foreach my $name (@functions) {
 		next unless defined $name;
-		$name = lc $name;
 		next if defined _operator($name); # Do not remove operator functions
 		delete $self->_functions->{$name};
 	}
@@ -199,8 +198,8 @@ sub parse {
 			_shunt_number(\@expr_queue, \@oper_stack, $token);
 			$binop_possible = 1;
 		} elsif ($token =~ m/\A\w+\z/) {
-			die "Invalid function \"$token\"\n" unless exists $self->_functions->{lc $token};
-			if ($self->_functions->{lc $token}{args} > 0) {
+			die "Invalid function \"$token\"\n" unless exists $self->_functions->{$token};
+			if ($self->_functions->{$token}{args} > 0) {
 				_shunt_function_with_args(\@expr_queue, \@oper_stack, $token);
 				$binop_possible = 0;
 			} else {
@@ -295,8 +294,8 @@ sub evaluate {
 	my @eval_stack;
 	foreach my $token (@$expr) {
 		die "Undefined token in evaluate\n" unless defined $token;
-		if (exists $self->_functions->{lc $token}) {
-			my $function = $self->_functions->{lc $token};
+		if (exists $self->_functions->{$token}) {
+			my $function = $self->_functions->{$token};
 			my $num_args = $function->{args};
 			die "Malformed expression\n" if @eval_stack < $num_args;
 			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : ();
@@ -512,7 +511,7 @@ negation.
 
 L<Math::Calc::Parser> parses several functions by default, which can be
 customized using L</"add_functions"> or L</"remove_functions"> on an object
-instance. Function names are case insensitive.
+instance.
 
 =over
 

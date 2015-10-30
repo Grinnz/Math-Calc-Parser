@@ -165,7 +165,7 @@ negation.
 
 L<Math::Calc::Parser> parses several functions by default, which can be
 customized using L</"add_functions"> or L</"remove_functions"> on an object
-instance. Function names are case insensitive.
+instance.
 
 =over
 
