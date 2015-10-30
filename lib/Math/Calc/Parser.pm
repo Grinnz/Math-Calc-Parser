@@ -8,7 +8,7 @@ use Math::Complex;
 use POSIX qw/ceil floor/;
 use Scalar::Util qw/blessed looks_like_number/;
 
-our $VERSION = '1.001';
+our $VERSION = '1.002';
 our @ISA = 'Exporter';
 our @EXPORT_OK = 'calc';
 our $ERROR;
