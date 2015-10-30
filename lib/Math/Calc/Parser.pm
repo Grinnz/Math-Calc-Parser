@@ -136,7 +136,7 @@ sub add_functions {
 		croak "No coderef for function \"$name\""
 			unless defined (my $code = $definition->{code});
 		croak "Invalid coderef for function \"$name\"" unless ref $code eq 'CODE';
-		$self->_functions->{$name} = { args => $args, code => $code };
+		$self->_functions->{lc $name} = { args => $args, code => $code };
 	}
 	return $self;
 }
@@ -144,7 +144,8 @@ sub add_functions {
 sub remove_functions {
 	my ($self, @functions) = @_;
 	foreach my $name (@functions) {
-		next unless defined $name and exists $self->_functions->{$name};
+		next unless defined $name;
+		$name = lc $name;
 		next if defined _operator($name); # Do not remove operator functions
 		delete $self->_functions->{$name};
 	}
@@ -198,8 +199,8 @@ sub parse {
 			_shunt_number(\@expr_queue, \@oper_stack, $token);
 			$binop_possible = 1;
 		} elsif ($token =~ m/\A\w+\z/) {
-			die "Invalid function \"$token\"\n" unless exists $self->_functions->{$token};
-			if ($self->_functions->{$token}{args} > 0) {
+			die "Invalid function \"$token\"\n" unless exists $self->_functions->{lc $token};
+			if ($self->_functions->{lc $token}{args} > 0) {
 				_shunt_function_with_args(\@expr_queue, \@oper_stack, $token);
 				$binop_possible = 0;
 			} else {
@@ -294,8 +295,8 @@ sub evaluate {
 	my @eval_stack;
 	foreach my $token (@$expr) {
 		die "Undefined token in evaluate\n" unless defined $token;
-		if (exists $self->_functions->{$token}) {
-			my $function = $self->_functions->{$token};
+		if (exists $self->_functions->{lc $token}) {
+			my $function = $self->_functions->{lc $token};
 			my $num_args = $function->{args};
 			die "Malformed expression\n" if @eval_stack < $num_args;
 			my @args = $num_args > 0 ? splice @eval_stack, -$num_args : ();
@@ -414,37 +415,35 @@ Throws an exception on error. See L<ath> for easy compact one-liners.
 
 =head1 METHODS
 
+Aside from C<add_functions> and C<remove_functions>, all methods can be called
+as class methods, and will act on a singleton object with the default functions
+available.
+
 =head2 new
 
   my $parser = Math::Calc::Parser->new;
 
 Creates a new L<Math::Calc::Parser> object.
 
-=head2 error
-
-  my $result = $parser->try_evaluate('2//');
-  die $parser->error unless defined $result;
-
-Returns the error message after a failed L</"try_evaluate">.
-
 =head2 parse
 
   my $parsed = Math::Calc::Parser->parse('5 / e^(i*pi)');
+  my $parsed = $parser->parse('3pi');
 
-Parses a mathematical expression. Can be called as either an object or class
-method. On success, returns an array reference representation of the expression
-in RPN notation which can be passed to L</"evaluate">. Throws an exception on
-failure.
+Parses a mathematical expression. On success, returns an array reference
+representation of the expression in RPN notation which can be passed to
+L</"evaluate">. Throws an exception on failure.
 
 =head2 evaluate
 
   my $result = Math::Calc::Parser->evaluate($parsed);
   my $result = Math::Calc::Parser->evaluate('log rand 7');
+  my $result = $parser->evaluate('round 13/3');
 
-Evaluates a mathematical expression. Can be called as either an object or class
-method, and the argument can be either an arrayref from L</"parse"> or a string
-expression. Returns the result of the expression on success or throws an
-exception on failure.
+Evaluates a mathematical expression. The argument can be either an arrayref
+from L</"parse"> or a string expression which will be passed to L</"parse">.
+Returns the result of the expression on success or throws an exception on
+failure.
 
 =head2 try_evaluate
 
@@ -463,7 +462,16 @@ exception on failure.
 Same as L</"evaluate"> but instead of throwing an exception on failure, returns
 undef and sets the L</"error"> attribute to the error message. The error
 message for the most recent L</"try_evaluate"> call can also be retrieved from
-the global variable C<$Math::Calc::Parser::ERROR>.
+the package variable C<$Math::Calc::Parser::ERROR>.
+
+=head2 error
+
+  my $result = Math::Calc::Parser->try_evaluate('(i');
+  die Math::Calc::Parser->error unless defined $result;
+  my $result = $parser->try_evaluate('2//');
+  die $parser->error unless defined $result;
+
+Returns the error message after a failed L</"try_evaluate">.
 
 =head2 add_functions
 
@@ -493,18 +501,18 @@ L</"add_functions">.
 =head1 OPERATORS
 
 L<Math::Calc::Parser> recognizes the following operators with their usual
-definitions.
+mathematical definitions.
 
   +, -, *, /, %, ^, !, <<, >>
 
-Note: C<+> and C<-> can represent a unary operation (negation) in addition to
-addition and subtraction.
+Note: C<+> and C<-> can represent both binary addition/subtraction and unary
+negation.
 
 =head1 DEFAULT FUNCTIONS
 
 L<Math::Calc::Parser> parses several functions by default, which can be
 customized using L</"add_functions"> or L</"remove_functions"> on an object
-instance.
+instance. Function names are case insensitive.
 
 =over
 
