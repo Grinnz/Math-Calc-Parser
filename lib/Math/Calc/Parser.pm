@@ -46,7 +46,7 @@ use constant ROUND_HALF => 0.50000000000008;
 	my (%lower_prec, %higher_prec);
 	$higher_prec{$_} = 1 for keys %operators;
 	foreach my $set (@op_precedence) {
-		delete $higher_prec{$_} for @$set;
+		delete @higher_prec{@$set};
 		foreach my $op (@$set) {
 			$operators{$op}{equal_to}{$_} = 1 for @$set;
 			$operators{$op}{lower_than}{$_} = 1 for keys %higher_prec;
@@ -56,7 +56,9 @@ use constant ROUND_HALF => 0.50000000000008;
 	}
 	
 	sub _operator { $operators{shift()} }
-	
+}
+
+{
 	sub _real { blessed $_[0] ? $_[0]->Re : $_[0] }
 	sub _each { blessed $_[0] ? cplx($_[1]->($_[0]->Re), $_[1]->($_[0]->Im)) : $_[1]->($_[0]) }
 	
@@ -103,11 +105,7 @@ use constant ROUND_HALF => 0.50000000000008;
 
 {
 	my $singleton;
-	sub _instance {
-		return $_[0] if blessed $_[0];
-		$singleton = $_[0]->new unless defined $singleton;
-		return $singleton;
-	}
+	sub _instance { blessed $_[0] ? $_[0] : ($singleton ||= $_[0]->new) }
 }
 
 sub calc ($) { _instance(__PACKAGE__)->evaluate($_[0]) }
