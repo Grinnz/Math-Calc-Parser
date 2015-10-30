@@ -72,8 +72,8 @@ use constant ROUND_HALF => 0.50000000000008;
 		'/'   => { args => 2, code => sub { $_[0] / $_[1] } },
 		'%'   => { args => 2, code => sub { _real($_[0]) % _real($_[1]) } },
 		'^'   => { args => 2, code => sub { $_[0] ** $_[1] } },
-		'!'   => { args => 1, code => sub { die "Factorial of negative number" if _real($_[0]) < 0;
-		                                    die "Factorial of infinity" if _real($_[0]) == 'inf';
+		'!'   => { args => 1, code => sub { die 'Factorial of negative number' if _real($_[0]) < 0;
+		                                    die 'Factorial of infinity' if _real($_[0]) == 'inf';
 		                                    reduce { $a * $b } 1, 1.._real($_[0]) } },
 		'u-'  => { args => 1, code => sub { -$_[0] } },
 		'u+'  => { args => 1, code => sub { +$_[0] } },
@@ -121,16 +121,16 @@ sub _functions { shift->{_functions} ||= _default_functions() }
 sub add_functions {
 	my ($self, %functions) = @_;
 	foreach my $name (keys %functions) {
-		croak "Function \"$name\" has invalid name" unless $name =~ m/\A[a-z]\w*\z/i;
+		croak qq{Function "$name" has invalid name} unless $name =~ m/\A[a-z]\w*\z/i;
 		my $definition = $functions{$name};
 		$definition = { args => 0, code => $definition } if ref $definition eq 'CODE';
-		croak "No argument count for function \"$name\""
+		croak qq{No argument count for function "$name"}
 			unless defined (my $args = $definition->{args});
-		croak "Invalid argument count for function \"$name\""
+		croak qq{Invalid argument count for function "$name"}
 			unless $args =~ m/\A\d+\z/ and $args >= 0;
-		croak "No coderef for function \"$name\""
+		croak qq{No coderef for function "$name"}
 			unless defined (my $code = $definition->{code});
-		croak "Invalid coderef for function \"$name\"" unless ref $code eq 'CODE';
+		croak qq{Invalid coderef for function "$name"} unless ref $code eq 'CODE';
 		$self->_functions->{$name} = { args => $args, code => $code };
 	}
 	return $self;
@@ -193,7 +193,7 @@ sub parse {
 			_shunt_number(\@expr_queue, \@oper_stack, $token);
 			$binop_possible = 1;
 		} elsif ($token =~ m/\A\w+\z/) {
-			die "Invalid function \"$token\"\n" unless exists $self->_functions->{$token};
+			die qq{Invalid function "$token"\n} unless exists $self->_functions->{$token};
 			if ($self->_functions->{$token}{args} > 0) {
 				_shunt_function_with_args(\@expr_queue, \@oper_stack, $token);
 				$binop_possible = 0;
@@ -202,7 +202,7 @@ sub parse {
 				$binop_possible = 1;
 			}
 		} else {
-			die "Unknown token \"$token\"\n";
+			die qq{Unknown token "$token"\n};
 		}
 	}
 	
@@ -303,11 +303,12 @@ sub evaluate {
 				}
 			}
 			if ($errored) {
+				$error = '' unless defined $error;
 				$error =~ s/ at .+? line \d+\.$//i;
 				chomp $error;
-				die "$error\n";
+				die qq{Error in function "$token": $error\n};
 			}
-			die "Undefined result from function or operator \"$token\"\n" unless defined $result;
+			die qq{Undefined result from function "$token"\n} unless defined $result;
 			{
 				no warnings 'numeric';
 				push @eval_stack, 0+$result;
@@ -315,7 +316,7 @@ sub evaluate {
 		} elsif (looks_like_number $token) {
 			push @eval_stack, $token;
 		} else {
-			die "Invalid function or operator \"$token\"\n";
+			die qq{Invalid function or operator "$token"\n};
 		}
 	}
 	
