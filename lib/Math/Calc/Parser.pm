@@ -2,11 +2,11 @@ package Math::Calc::Parser;
 use strict;
 use warnings;
 use Carp 'croak';
+use Exporter ();
 use List::Util 'reduce';
 use Math::Complex;
 use POSIX qw/ceil floor/;
 use Scalar::Util qw/blessed looks_like_number/;
-require Exporter;
 
 our $VERSION = '1.001';
 our @ISA = 'Exporter';
