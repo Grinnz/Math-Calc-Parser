@@ -76,6 +76,7 @@ use constant ROUND_HALF => 0.50000000000008;
 		'^'   => { args => 2, code => sub { $_[0] ** $_[1] } },
 		'!'   => { args => 1, code => sub { die 'Factorial of negative number' if _real($_[0]) < 0;
 		                                    die 'Factorial of infinity' if _real($_[0]) == 'inf';
+		                                    die 'Factorial of NaN' if _real($_[0]) != _real($_[0]);
 		                                    reduce { $a * $b } 1, 1.._real($_[0]) } },
 		'u-'  => { args => 1, code => sub { -$_[0] } },
 		'u+'  => { args => 1, code => sub { +$_[0] } },
