@@ -1,6 +1,7 @@
 package Math::Calc::Parser;
 use strict;
 use warnings;
+use utf8;
 use Carp 'croak';
 use Exporter ();
 use List::Util 'reduce';
@@ -83,6 +84,7 @@ use constant ROUND_HALF => 0.50000000000008;
 		'u+'  => { args => 1, code => sub { +$_[0] } },
 		sqrt  => { args => 1, code => sub { sqrt $_[0] } },
 		pi    => { args => 0, code => sub { pi } },
+		'π'   => { args => 0, code => sub { pi } },
 		i     => { args => 0, code => sub { i } },
 		e     => { args => 0, code => sub { exp 1 } },
 		ln    => { args => 1, code => sub { log $_[0] } },
@@ -351,6 +353,7 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
 =head1 SYNOPSIS
 
   use Math::Calc::Parser 'calc';
+  use utf8; # for π in source code
   
   my $result = calc '2 + 2'; # 4
   my $result = calc 'int rand 5'; # Random integer between 0 and 4
@@ -360,7 +363,7 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   
   # Class methods
   my $result = Math::Calc::Parser->evaluate('2 + 2'); # 4
-  my $result = Math::Calc::Parser->evaluate('3pi^2'); # 29.608813203268
+  my $result = Math::Calc::Parser->evaluate('3π^2'); # 29.608813203268
   my $result = Math::Calc::Parser->evaluate('0.7(ln 4)'); # 0.970406052783923
   
   # With more advanced error handling
@@ -382,8 +385,8 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   my $result = $parser->try_evaluate('triple triple'); # undef (Malformed expression)
   die $parser->error unless defined $result;
   
-  $parser->remove_functions('pi', 'e');
-  $parser->evaluate('3pi'); # Invalid function exception
+  $parser->remove_functions('π', 'e');
+  $parser->evaluate('3π'); # Invalid function exception
 
 =head1 DESCRIPTION
 
@@ -562,6 +565,10 @@ Log with arbitrary base given as second argument.
 =item pi
 
 π
+
+=item π
+
+π (this must be the decoded Unicode character)
 
 =item rand
 
