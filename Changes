@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+1.002     2018-09-13 11:50:48 EDT
   - Throw explicit error when taking the factorial of NaN
   - Support π as alias for pi
 
