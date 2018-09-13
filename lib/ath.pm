@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Math::Calc::Parser;
 use Encode ();
-our $VERSION = '1.002';
+our $VERSION = '1.003';
 use Filter::Simple sub {
 	my $expr = quotemeta Encode::decode 'UTF-8', "$_", Encode::FB_CROAK | Encode::LEAVE_SRC;
 	$_ = 'use utf8; print Math::Calc::Parser::calc "' . $expr . '", "\n";'
