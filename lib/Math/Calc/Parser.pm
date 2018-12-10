@@ -17,6 +17,13 @@ our $ERROR;
 # See disclaimer in Math::Round
 use constant ROUND_HALF => 0.50000000000008;
 
+BEGIN {
+	local $@;
+	if (eval { require Math::Random::Secure; 1 }) {
+		Math::Random::Secure->import('rand');
+	}
+}
+
 {
 	my %operators = (
 		'<<' => { assoc => 'left' },
@@ -572,7 +579,8 @@ Log with arbitrary base given as second argument.
 
 =item rand
 
-Random value between 0 and 1 (exclusive of 1).
+Random value between 0 and 1 (exclusive of 1). Uses L<Math::Random::Secure> if
+installed.
 
 =item round
 

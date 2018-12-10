@@ -7,5 +7,7 @@ requires 'List::Util';
 requires 'Math::Complex';
 requires 'POSIX';
 requires 'Scalar::Util';
+recommends 'Math::Random::Secure';
 test_requires 'Test::More' => '0.88';
 test_requires 'File::Temp';
+author_requires 'Math::Random::Secure';
