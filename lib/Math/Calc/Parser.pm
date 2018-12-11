@@ -118,7 +118,7 @@ BEGIN {
 		ceil  => { args => 1, code => sub { _each($_[0], sub { POSIX::ceil $_[0] }) }, bignum_code => sub { $_[0]->copy->bceil } },
 		round => { args => 1, code => sub { _each($_[0], sub { _round $_[0] }) }, bignum_code => sub { $_[0]->copy->bfround(0, 'common') },
 			# Math::BigRat ->to_float and ->numify broken, just use native numbers
-			bigrat_code => sub { _round($_[0]->numerator->numify / $_[0]->denominator->numify) } },
+			bigrat_code => sub { Math::BigInt->new(_round($_[0]->numerator->numify / $_[0]->denominator->numify)) } },
 	);
 	
 	sub _default_functions { +{%functions} }
