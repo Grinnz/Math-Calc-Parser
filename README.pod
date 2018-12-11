@@ -43,6 +43,16 @@ Math::Calc::Parser - Parse and evaluate mathematical expressions
   
   $parser->remove_functions('π', 'e');
   $parser->evaluate('3π'); # Invalid function exception
+  
+  # Arbitrary precision calculations - use only in a controlled environment
+  $parser->bignum(1);
+  my $result = $parser->evaluate('30!'); # 265252859812191058636308480000000
+  my $result = $parser->evaluate('atan pi'); # 1.262627255678911683444322083605698343509
+  
+  # Rational number calculations - use only in a controlled environment
+  $parser->bigrat(1);
+  my $result = $parser->evaluate('3 / 9'); # 1/3
+  my $result = $parser->evaluate('3 >> 2'); # 3/4
 
 =head1 DESCRIPTION
 
@@ -67,6 +77,29 @@ customized using L</"add_functions"> and L</"remove_functions">.
 Compact exportable function wrapping L</"evaluate"> for string expressions.
 Throws an exception on error. See L<ath> for easy compact one-liners.
 
+=head1 ATTRIBUTES
+
+These attributes can only be set on instantiated objects.
+
+=head2 bignum
+
+  my $bool = $parser->bignum;
+  $parser  = $parser->bignum($bool);
+
+Enable support for arbitrary precision numbers using L<Math::BigInt> and
+L<Math::BigFloat>. This will avoid losing precision when working with floats or
+large integers, but see L</"BIGNUM CAVEATS">.
+
+=head2 bigrat
+
+  my $bool = $parser->bigrat;
+  $parser  = $parser->bigrat($bool);
+
+Enable support for precise rational numbers using L<Math::BigRat>. This will
+avoid losing precision when working with integer divison and similar
+operations, and will result in output like C<3/7> where possible, but see
+L</"BIGNUM CAVEATS">.
+
 =head1 METHODS
 
 Aside from C<add_functions> and C<remove_functions>, all methods can be called
@@ -76,6 +109,7 @@ available.
 =head2 new
 
   my $parser = Math::Calc::Parser->new;
+  my $parser = Math::Calc::Parser->new(bignum => 1);
 
 Creates a new L<Math::Calc::Parser> object.
 
@@ -131,7 +165,8 @@ Returns the error message after a failed L</"try_evaluate">.
 
   $parser->add_functions(
     my_function => { args => 5, code => sub { return grep { $_ > 0 } @_; } },
-    other_function => sub { 20 }
+    other_function => sub { 20 },
+    bignum_function => { args => 1, code => sub { 2 ** $_[0] }, bignum_code => sub { Math::BigInt->new(2)->bpow($_[0]) } },
   );
 
 Adds functions to be recognized by the parser object. Keys are function names
@@ -143,6 +178,12 @@ than or equal to C<0>. C<code> or the passed coderef will be called with the
 numeric operands passed as parameters, and must either return a numeric result
 or throw an exception. Non-numeric results will be cast to numbers in the usual
 perl fashion, and undefined results will throw an evaluation error.
+
+Alternate implementations to be used when L</"bignum"> or L</"bigrat"> is
+enabled can be passed as C<bignum_code> and C<bigrat_code> respectively.
+C<bignum_code> will also be used for L</"bigrat"> calculations if
+C<bigrat_code> is not separately defined; it is not common that these will need
+separate implementations.
 
 =head2 remove_functions
 
@@ -181,6 +222,10 @@ Absolute value.
 =item atan
 
 Inverse sine, cosine, and tangent.
+
+=item atan2
+
+Two-argument inverse tangent of first argument divided by second argument.
 
 =item ceil
 
@@ -228,11 +273,13 @@ Log with arbitrary base given as second argument.
 
 =item rand
 
-Random value between 0 and 1 (exclusive of 1).
+Random value between 0 and 1 (exclusive of 1). Uses L<Math::Random::Secure> if
+installed.
 
 =item round
 
-Round to nearest integer, with halfway cases rounded away from zero.
+Round to nearest integer, with halfway cases rounded away from zero. Due to
+bugs in L<Math::BigRat>, precision may be lost with L</"bigrat"> enabled.
 
 =item sin
 
@@ -260,6 +307,32 @@ numeric operations but may be more difficult to use in comparisons.
 Operators that are not defined to operate on complex numbers will return the
 result of the operation on the real components of their operands. This includes
 the operators C<E<lt>E<lt>>, C<E<gt>E<gt>>, C<%>, and C<!>.
+
+=head1 BIGNUM CAVEATS
+
+The L<Math::BigInt>, L<Math::BigFloat>, and L<Math::BigRat> packages are useful
+for working with numbers without losing precision, and can be used by this
+module by setting the L</"bignum"> or L</"bigrat"> attributes, but care should
+be taken. They will perform significantly slower than native Perl numbers, and
+can result in an operation that does not terminate or one that uses up all your
+memory.
+
+Additionally, similar to when using the L<bignum> or L<bigrat> pragmas, the
+auto-upgrading and downgrading behavior of these modules can only be set
+globally, so enabling these options will affect all other uses of these modules
+in your program. For the same reason, it is not recommended to enable both
+L</"bignum"> and L</"bigrat"> in the same program.
+
+The evaluated result may be a L<Math::BigInt>, L<Math::BigFloat>,
+L<Math::BigRat>, or other similar type of object. These objects can be printed
+and behave normally as numbers.
+
+L<Math::BigFloat> defaults to rounding values at 40 digits in division. This
+can be controlled by setting the global L<Math::BigFloat/"ACCURACY AND PRECISION">,
+but may have a large impact on performance and memory usage.
+
+Complex math is incompatible with L</"bignum"> and L</"bigrat"> and will likely
+result in NaN.
 
 =head1 BUGS
 
