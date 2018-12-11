@@ -1,5 +1,7 @@
 {{$NEXT}}
   - Use Math::Random::Secure for rand function if installed
+  - Add bignum and bigrat support
+  - Add atan2 function
 
 1.002     2018-09-13 11:50:48 EDT
   - Throw explicit error when taking the factorial of NaN
