@@ -148,7 +148,9 @@ sub bignum {
 	$self->{bignum} = !!shift;
 	if ($self->{bignum}) {
 		require Math::BigInt;
+		Math::BigInt->VERSION('1.87');
 		require Math::BigFloat;
+		Math::BigFloat->VERSION('1.58');
 		Math::BigInt->upgrade('Math::BigFloat');
 		Math::BigFloat->downgrade('Math::BigInt');
 		Math::BigFloat->upgrade(undef);
@@ -162,8 +164,11 @@ sub bigrat {
 	$self->{bigrat} = !!shift;
 	if ($self->{bigrat}) {
 		require Math::BigInt;
+		Math::BigInt->VERSION('1.87');
 		require Math::BigRat;
+		Math::BigRat->VERSION('0.20');
 		require Math::BigFloat;
+		Math::BigFloat->VERSION('1.58');
 		Math::BigInt->upgrade('Math::BigFloat');
 		Math::BigFloat->upgrade('Math::BigRat');
 		Math::BigFloat->downgrade(undef);
