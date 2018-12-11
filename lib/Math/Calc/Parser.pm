@@ -9,7 +9,7 @@ use Math::Complex ();
 use POSIX ();
 use Scalar::Util ();
 
-our $VERSION = '1.003';
+our $VERSION = '1.004';
 our @ISA = 'Exporter';
 our @EXPORT_OK = 'calc';
 our $ERROR;
