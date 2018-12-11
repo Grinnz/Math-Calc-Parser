@@ -31,8 +31,8 @@
       },
       "develop" : {
          "requires" : {
-            "Math::BigFloat" : "1.999720",
-            "Math::BigInt" : "1.999720",
+            "Math::BigFloat" : "1.999722",
+            "Math::BigInt" : "1.999722",
             "Math::BigRat" : "0.260804",
             "Math::Random::Secure" : "0",
             "Pod::Coverage::TrustPod" : "0",
