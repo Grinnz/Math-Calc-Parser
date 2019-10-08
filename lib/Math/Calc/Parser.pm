@@ -4,7 +4,6 @@ use warnings;
 use utf8;
 use Carp ();
 use Exporter ();
-use List::Util ();
 use Math::Complex ();
 use POSIX ();
 use Scalar::Util ();
@@ -92,7 +91,8 @@ BEGIN {
 		'/'   => { args => 2, code => sub { $_[0] / $_[1] } },
 		'%'   => { args => 2, code => sub { _real($_[0]) % _real($_[1]) } },
 		'^'   => { args => 2, code => sub { $_[0] ** $_[1] } },
-		'!'   => { args => 1, code => sub { my $r = _fact_check($_[0]); List::Util::reduce { $a * $b } 1, 1..$r },
+		'!'   => { args => 1,
+			code => sub { my $r = _fact_check($_[0]); my ($n, $f) = (2, 1); $f *= $n++ while $f != 'inf' and $n <= $r; $f },
 			bignum_code => sub { my $r = _fact_check($_[0]); $r->copy->bfac } },
 		'u-'  => { args => 1, code => sub { -$_[0] } },
 		'u+'  => { args => 1, code => sub { +$_[0] } },

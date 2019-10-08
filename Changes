@@ -1,4 +1,5 @@
 {{$NEXT}}
+  - Implement factorial operator lazily to avoid running out of memory
 
 1.004     2018-12-11 17:07:49 EST
   - Increase Math::BigInt, Math::BigFloat, and Math::BigRat versions required
